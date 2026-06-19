@@ -159,9 +159,6 @@ export type FacebookShareResult =
     }
   | { method: "manual"; imageUrl: string };
 
-function getFacebookAppId(): string | undefined {
-  return import.meta.env.VITE_FACEBOOK_APP_ID?.trim() || undefined;
-}
 
 function openFacebookDialog(url: string): void {
   const popup = window.open(
@@ -172,20 +169,6 @@ function openFacebookDialog(url: string): void {
   if (!popup) {
     window.location.href = url;
   }
-}
-
-function openFacebookShareDialog(options: {
-  appId: string;
-  sharePageUrl: string;
-  redirectUri: string;
-}): void {
-  const params = new URLSearchParams({
-    app_id: options.appId,
-    display: "popup",
-    href: options.sharePageUrl,
-    redirect_uri: options.redirectUri,
-  });
-  openFacebookDialog(`https://www.facebook.com/dialog/share?${params.toString()}`);
 }
 
 function openFacebookSharer(sharePageUrl: string): void {
@@ -199,7 +182,6 @@ export async function shareToFacebook(options: {
   guesses: Cell[][];
   won: boolean;
 }): Promise<FacebookShareResult> {
-  const appId = getFacebookAppId();
   const site = getShareUrl();
   const payload = buildSharePayload(
     options.puzzleNumber,
@@ -219,15 +201,8 @@ export async function shareToFacebook(options: {
   const textCopied = await copyShareText(options.shareText);
 
   if (!isLocalDev()) {
-    if (appId) {
-      openFacebookShareDialog({
-        appId,
-        sharePageUrl,
-        redirectUri: `${site}/`,
-      });
-    } else {
-      openFacebookSharer(sharePageUrl);
-    }
+    // sharer.php works without Facebook App Domains; Share Dialog requires href domain whitelist
+    openFacebookSharer(sharePageUrl);
     return { method: "dialog", imageCopied, textCopied, imageUrl };
   }
 
