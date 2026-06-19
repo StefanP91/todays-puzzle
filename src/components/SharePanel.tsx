@@ -107,8 +107,14 @@ export default function SharePanel({
             won,
           });
           if (result.method === "dialog") {
-            setFacebookToast("Сподели го постот на Facebook");
-            setTimeout(() => setFacebookToast(""), 4000);
+            if (result.imageCopied) {
+              setFacebookToast(
+                "Сликата е копирана — ако постот е празен, залепи ја (Ctrl+V)"
+              );
+            } else {
+              setFacebookToast("Сподели го линкот/постот на Facebook");
+            }
+            setTimeout(() => setFacebookToast(""), 7000);
           } else if (result.method === "clipboard") {
             setFacebookToast(
               result.imageCopied

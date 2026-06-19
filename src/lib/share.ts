@@ -146,7 +146,12 @@ export async function copyImageToClipboard(blob: Blob): Promise<boolean> {
 }
 
 export type FacebookShareResult =
-  | { method: "dialog" }
+  | {
+      method: "dialog";
+      imageCopied: boolean;
+      textCopied: boolean;
+      imageUrl: string;
+    }
   | {
       method: "clipboard";
       imageCopied: boolean;
@@ -158,23 +163,34 @@ function getFacebookAppId(): string | undefined {
   return import.meta.env.VITE_FACEBOOK_APP_ID?.trim() || undefined;
 }
 
-function openFacebookFeedDialog(options: {
+function openFacebookDialog(url: string): void {
+  const popup = window.open(
+    url,
+    "facebook-share",
+    "width=640,height=720,menubar=no,toolbar=no,status=no,scrollbars=yes,resizable=yes"
+  );
+  if (!popup) {
+    window.location.href = url;
+  }
+}
+
+function openFacebookShareDialog(options: {
   appId: string;
-  site: string;
-  imageUrl: string;
-  title: string;
-  description: string;
+  sharePageUrl: string;
+  redirectUri: string;
 }): void {
   const params = new URLSearchParams({
     app_id: options.appId,
     display: "popup",
-    link: options.site,
-    picture: options.imageUrl,
-    name: options.title,
-    description: options.description,
-    redirect_uri: options.site,
+    href: options.sharePageUrl,
+    redirect_uri: options.redirectUri,
   });
-  openShareWindow(`https://www.facebook.com/dialog/feed?${params.toString()}`);
+  openFacebookDialog(`https://www.facebook.com/dialog/share?${params.toString()}`);
+}
+
+function openFacebookSharer(sharePageUrl: string): void {
+  const params = new URLSearchParams({ u: sharePageUrl });
+  openFacebookDialog(`https://www.facebook.com/sharer/sharer.php?${params.toString()}`);
 }
 
 export async function shareToFacebook(options: {
@@ -191,34 +207,35 @@ export async function shareToFacebook(options: {
     options.won
   );
   const encoded = encodeShareParam(payload);
-  const imageUrl = `${site}/api/share.png?d=${encoded}`;
-  const scoreLabel = options.won ? `${options.guesses.length}/6` : "X/6";
-  const title = `Денешна Загатка #${options.puzzleNumber} — ${scoreLabel}`;
-
-  if (appId && !isLocalDev()) {
-    openFacebookFeedDialog({
-      appId,
-      site,
-      imageUrl,
-      title,
-      description: options.shareText,
-    });
-    return { method: "dialog" };
-  }
+  const sharePageUrl = `${site}/api/share?d=${encoded}`;
 
   const blob = await generateShareImage({
     puzzleNumber: options.puzzleNumber,
     guesses: options.guesses,
     won: options.won,
   });
-
+  const imageUrl = blobToObjectUrl(blob);
   const imageCopied = await copyImageToClipboard(blob);
   const textCopied = await copyShareText(options.shareText);
 
+  if (!isLocalDev()) {
+    if (appId) {
+      openFacebookShareDialog({
+        appId,
+        sharePageUrl,
+        redirectUri: `${site}/`,
+      });
+    } else {
+      openFacebookSharer(sharePageUrl);
+    }
+    return { method: "dialog", imageCopied, textCopied, imageUrl };
+  }
+
   if (imageCopied || textCopied) {
     openFacebook();
+    URL.revokeObjectURL(imageUrl);
     return { method: "clipboard", imageCopied, textCopied };
   }
 
-  return { method: "manual", imageUrl: blobToObjectUrl(blob) };
+  return { method: "manual", imageUrl };
 }
