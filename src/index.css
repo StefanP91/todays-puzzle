@@ -102,15 +102,16 @@ body {
     #root {
       display: flex;
       justify-content: center;
-      align-items: center;
-      padding: 1.5rem;
+      align-items: flex-start;
+      padding: 1.5rem 1rem 2rem;
       min-height: 100vh;
     }
 
     .app-page {
-      max-width: 32rem;
+      max-width: 42rem;
+      width: 100%;
       min-height: auto;
-      gap: 1rem;
+      gap: 1.25rem;
       padding: 0;
     }
 
@@ -405,4 +406,239 @@ body {
 
 .animate-shake {
   animation: shake 0.5s ease-in-out;
+}
+
+/* ── Landing sections (Wordle-style) ── */
+.landing-footer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.landing-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.landing-locale-btn {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.4rem 0.75rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #eee;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.landing-locale-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.landing-section {
+  width: 100%;
+  background: rgba(22, 33, 62, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  padding: 1.25rem 1rem;
+}
+
+.landing-section--last {
+  margin-bottom: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .landing-section {
+    padding: 1.5rem 1.25rem;
+  }
+}
+
+.landing-section-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0 0 1rem;
+  text-align: center;
+  color: #fff;
+}
+
+.landing-lang-group {
+  margin-bottom: 1.25rem;
+}
+
+.landing-lang-group:last-child {
+  margin-bottom: 0;
+}
+
+.landing-lang-group-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9ca3af;
+  margin: 0 0 0.5rem;
+}
+
+.landing-lang-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+@media (min-width: 480px) {
+  .landing-lang-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.landing-lang-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: 0.65rem 0.6rem;
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  min-height: 5rem;
+}
+
+.landing-lang-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.landing-lang-card--active {
+  border-color: rgba(83, 141, 78, 0.6);
+  background: rgba(83, 141, 78, 0.12);
+}
+
+.landing-lang-flag {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.landing-lang-names {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.landing-lang-native {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #f3f4f6;
+  line-height: 1.2;
+}
+
+.landing-lang-en {
+  font-size: 0.65rem;
+  color: #9ca3af;
+}
+
+.landing-lang-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  margin-top: auto;
+}
+
+.landing-lang-badge--live {
+  color: #6ee7a0;
+}
+
+.landing-tips-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.landing-tip-item {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.landing-tip-num {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: #538d4e;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.landing-tip-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+  color: #f9fafb;
+}
+
+.landing-tip-body {
+  font-size: 0.8rem;
+  line-height: 1.45;
+  margin: 0;
+  color: #d1d5db;
+}
+
+.landing-faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.landing-faq-item {
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.landing-faq-question {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  text-align: left;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #f3f4f6;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.landing-faq-chevron {
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #9ca3af;
+  width: 1.25rem;
+  text-align: center;
+}
+
+.landing-faq-answer {
+  margin: 0;
+  padding: 0 1rem 0.85rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #d1d5db;
 }

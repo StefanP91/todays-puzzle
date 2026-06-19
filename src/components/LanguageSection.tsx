@@ -1,0 +1,88 @@
+import type { GameLanguage } from "../lib/languages";
+import { LANGUAGES_BY_REGION } from "../lib/languages";
+import type { SiteContent } from "../lib/siteContent";
+
+interface LanguageSectionProps {
+  content: SiteContent;
+  onSelect: (lang: GameLanguage) => void;
+}
+
+function LanguageCard({
+  lang,
+  content,
+  onSelect,
+}: {
+  lang: GameLanguage;
+  content: SiteContent;
+  onSelect: (lang: GameLanguage) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(lang)}
+      className={`landing-lang-card ${lang.available ? "landing-lang-card--active" : ""}`}
+    >
+      <span className="landing-lang-flag" aria-hidden>
+        {lang.flag}
+      </span>
+      <span className="landing-lang-names">
+        <span className="landing-lang-native">{lang.nativeName}</span>
+        <span className="landing-lang-en">{lang.name}</span>
+      </span>
+      <span
+        className={`landing-lang-badge ${lang.available ? "landing-lang-badge--live" : ""}`}
+      >
+        {lang.available ? content.playNow : content.comingSoon}
+      </span>
+    </button>
+  );
+}
+
+function LanguageGroup({
+  title,
+  languages,
+  content,
+  onSelect,
+}: {
+  title: string;
+  languages: GameLanguage[];
+  content: SiteContent;
+  onSelect: (lang: GameLanguage) => void;
+}) {
+  return (
+    <div className="landing-lang-group">
+      <h3 className="landing-lang-group-title">{title}</h3>
+      <div className="landing-lang-grid">
+        {languages.map((lang) => (
+          <LanguageCard key={lang.code} lang={lang} content={content} onSelect={onSelect} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function LanguageSection({ content, onSelect }: LanguageSectionProps) {
+  return (
+    <section className="landing-section" id="languages">
+      <h2 className="landing-section-title">{content.selectLanguage}</h2>
+      <LanguageGroup
+        title={content.primaryLanguages}
+        languages={LANGUAGES_BY_REGION.primary}
+        content={content}
+        onSelect={onSelect}
+      />
+      <LanguageGroup
+        title={content.balkanLanguages}
+        languages={LANGUAGES_BY_REGION.balkan}
+        content={content}
+        onSelect={onSelect}
+      />
+      <LanguageGroup
+        title={content.europeanLanguages}
+        languages={LANGUAGES_BY_REGION.european}
+        content={content}
+        onSelect={onSelect}
+      />
+    </section>
+  );
+}

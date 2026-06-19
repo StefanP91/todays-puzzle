@@ -1,12 +1,22 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import BestTipsSection from "./components/BestTipsSection";
 import Board from "./components/Board";
 import CompletedBanner from "./components/CompletedBanner";
+import FaqSection from "./components/FaqSection";
 import Keyboard from "./components/Keyboard";
+import LanguageSection from "./components/LanguageSection";
 import ResultModal from "./components/ResultModal";
 import StatsModal from "./components/StatsModal";
 import TrainingBanner from "./components/TrainingBanner";
 import { buildShareText, evaluateGuess, isValidWord, mergeKeyboardState } from "./lib/game";
+import type { GameLanguage } from "./lib/languages";
 import { getSharePageUrl } from "./lib/shareEncode";
+import {
+  getSiteContent,
+  loadSiteLocale,
+  saveSiteLocale,
+  type SiteLocale,
+} from "./lib/siteContent";
 import {
   createNewGame,
   loadGame,
@@ -53,6 +63,18 @@ export default function App() {
   const [stats, setStats] = useState<Stats>(loadStats);
   const [statsUpdated, setStatsUpdated] = useState(false);
   const [trainingRound, setTrainingRound] = useState(1);
+  const [siteLocale, setSiteLocale] = useState<SiteLocale>(loadSiteLocale);
+  const gameRef = useRef<HTMLDivElement>(null);
+
+  const siteContent = useMemo(() => getSiteContent(siteLocale), [siteLocale]);
+
+  const toggleSiteLocale = useCallback(() => {
+    setSiteLocale((prev) => {
+      const next = prev === "en" ? "mk" : "en";
+      saveSiteLocale(next);
+      return next;
+    });
+  }, []);
 
   const resetBoard = useCallback(() => {
     const blank = emptyBoard();
@@ -141,6 +163,17 @@ export default function App() {
     setMessage(text);
     setTimeout(() => setMessage(""), duration);
   }, []);
+
+  const handleLanguageSelect = useCallback(
+    (lang: GameLanguage) => {
+      if (lang.available) {
+        gameRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      showToast(siteContent.comingSoon, 2500);
+    },
+    [siteContent.comingSoon, showToast]
+  );
 
   const showHintClue = useCallback(() => {
     showToast(`Навод: ${hint}`, 5000);
@@ -318,7 +351,7 @@ export default function App() {
           </div>
         )}
 
-        <div className="app-shell">
+        <div className="app-shell" id="game" ref={gameRef}>
       <header className="app-header flex items-center justify-between border-b border-white/10 shrink-0">
         <button
           type="button"
@@ -392,6 +425,22 @@ export default function App() {
           />
         </div>
       </main>
+        </div>
+
+        <div className="landing-footer">
+          <div className="landing-toolbar">
+            <button
+              type="button"
+              className="landing-locale-btn"
+              onClick={toggleSiteLocale}
+              aria-label="Toggle site language"
+            >
+              {siteContent.localeToggle}
+            </button>
+          </div>
+          <LanguageSection content={siteContent} onSelect={handleLanguageSelect} />
+          <BestTipsSection content={siteContent} />
+          <FaqSection content={siteContent} />
         </div>
       </div>
     </>
