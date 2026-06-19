@@ -1,10 +1,47 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
 const PAYLOAD_RE = /^(\d{1,5})-([x\d])-([0123]{30})$/;
 const CELL_FILL = { 1: "#3a3a3c", 2: "#b59f3b", 3: "#538d4e" };
-const FONT = "DejaVu Sans, Liberation Sans, Arial, sans-serif";
 export const SHARE_IMAGE_WIDTH = 1200;
 export const SHARE_IMAGE_HEIGHT = 630;
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+let fontStyles = null;
+
+function escapeXml(text) {
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function getFontStyles() {
+  if (!fontStyles) {
+    const regular = readFileSync(
+      join(__dirname, "fonts", "NotoSans-Regular.ttf")
+    ).toString("base64");
+    const bold = readFileSync(join(__dirname, "fonts", "NotoSans-Bold.ttf")).toString(
+      "base64"
+    );
+    fontStyles = `<style>
+      @font-face {
+        font-family: "ShareSans";
+        font-weight: 400;
+        src: url("data:font/ttf;base64,${regular}") format("truetype");
+      }
+      @font-face {
+        font-family: "ShareSans";
+        font-weight: 700;
+        src: url("data:font/ttf;base64,${bold}") format("truetype");
+      }
+    </style>`;
+  }
+  return fontStyles;
+}
 
 export function decodeShareParam(encoded) {
   if (!encoded || encoded.length > 80) return null;
@@ -25,14 +62,6 @@ export function decodeShareParam(encoded) {
   } catch {
     return null;
   }
-}
-
-function escapeXml(text) {
-  return String(text)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 export function getShareTitle(data) {
@@ -97,13 +126,14 @@ function buildShareSvg(data, origin) {
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+  <defs>${getFontStyles()}</defs>
   <rect width="100%" height="100%" fill="#1a1a2e"/>
   <rect x="24" y="24" width="${width - 48}" height="${height - 48}" rx="20" fill="#16213e"/>
   ${cells}
-  <text x="${textX}" y="210" fill="#ffffff" font-size="42" font-weight="bold" font-family="${FONT}">Денешна Загатка</text>
-  <text x="${textX}" y="260" fill="#9ca3af" font-size="30" font-family="${FONT}">#${data.puzzleNumber}  ${scoreLabel}</text>
-  <text x="${textX}" y="340" fill="#e5e7eb" font-size="28" font-weight="bold" font-family="${FONT}">${escapeXml(headline)}</text>
-  <text x="${textX}" y="390" fill="#60a5fa" font-size="26" font-family="${FONT}">${escapeXml(displayLink)}</text>
+  <text x="${textX}" y="210" fill="#ffffff" font-family="ShareSans" font-size="42" font-weight="700">${escapeXml("Денешна Загатка")}</text>
+  <text x="${textX}" y="260" fill="#9ca3af" font-family="ShareSans" font-size="30" font-weight="400">${escapeXml(`#${data.puzzleNumber}  ${scoreLabel}`)}</text>
+  <text x="${textX}" y="340" fill="#e5e7eb" font-family="ShareSans" font-size="28" font-weight="700">${escapeXml(headline)}</text>
+  <text x="${textX}" y="390" fill="#60a5fa" font-family="ShareSans" font-size="26" font-weight="400">${escapeXml(displayLink)}</text>
 </svg>`;
 }
 
