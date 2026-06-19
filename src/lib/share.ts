@@ -62,14 +62,6 @@ export async function copyShareText(text: string): Promise<boolean> {
   }
 }
 
-export function getTelegramShareUrl(text: string, url: string): string {
-  const params = new URLSearchParams({
-    url,
-    text,
-  });
-  return `https://t.me/share/url?${params.toString()}`;
-}
-
 export function getViberShareUrl(text: string): string {
   return `viber://forward?text=${encodeURIComponent(text)}`;
 }
