@@ -408,6 +408,55 @@ body {
   animation: shake 0.5s ease-in-out;
 }
 
+/* ── Top-right language button ── */
+.top-lang-btn {
+  position: fixed;
+  top: calc(0.5rem + var(--safe-top));
+  right: calc(0.65rem + var(--safe-right));
+  z-index: 50;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #f3f4f6;
+  background: rgba(22, 33, 62, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  touch-manipulation;
+}
+
+.top-lang-btn:hover {
+  background: rgba(30, 45, 80, 0.95);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+@media (max-width: 380px) {
+  .top-lang-btn__label {
+    display: none;
+  }
+
+  .top-lang-btn {
+    padding: 0.5rem;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    justify-content: center;
+  }
+}
+
+@media (min-width: 768px) {
+  .top-lang-btn {
+    top: calc(1rem + var(--safe-top));
+    right: calc(1rem + var(--safe-right));
+    font-size: 0.75rem;
+    padding: 0.5rem 0.85rem;
+  }
+}
+
 /* ── Landing sections (Wordle-style) ── */
 .landing-footer {
   width: 100%;

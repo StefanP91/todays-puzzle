@@ -175,6 +175,13 @@ export default function App() {
     [siteContent.comingSoon, showToast]
   );
 
+  const scrollToLanguages = useCallback(() => {
+    document.getElementById("languages")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, []);
+
   const showHintClue = useCallback(() => {
     showToast(`Навод: ${hint}`, 5000);
   }, [hint, showToast]);
@@ -307,6 +314,16 @@ export default function App() {
       )}
 
       <div className="app-page">
+        <button
+          type="button"
+          className="top-lang-btn"
+          onClick={scrollToLanguages}
+          aria-label={siteContent.selectLanguage}
+        >
+          <span aria-hidden>🌐</span>
+          <span className="top-lang-btn__label">{siteContent.selectLanguage}</span>
+        </button>
+
         {status === "playing" && isDaily && (
           <div className="game-hint game-info-box game-info-box--outside">
             <p className="game-info-title">Како се игра</p>
