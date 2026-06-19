@@ -1,12 +1,14 @@
 import { readFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import opentype from "opentype.js";
 import sharp from "sharp";
 import { SHARE_IMAGE_HEIGHT, SHARE_IMAGE_WIDTH } from "./share-constants.mjs";
 import { getShareImageCaption } from "./share-data.mjs";
 
 const CELL_FILL = { 1: "#3a3a3c", 2: "#b59f3b", 3: "#538d4e" };
-let fontStyles = null;
+let regularFont = null;
+let boldFont = null;
 
 function getLibDir() {
   if (typeof import.meta !== "undefined" && import.meta.url) {
@@ -32,32 +34,35 @@ function readFontFile(name) {
   throw new Error(`Font not found: ${name}`);
 }
 
-function escapeXml(text) {
-  return String(text)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+function getRegularFont() {
+  if (!regularFont) {
+    regularFont = opentype.parse(readFontFile("NotoSans-Regular.ttf"));
+  }
+  return regularFont;
 }
 
-function getFontStyles() {
-  if (!fontStyles) {
-    const regular = readFontFile("NotoSans-Regular.ttf").toString("base64");
-    const bold = readFontFile("NotoSans-Bold.ttf").toString("base64");
-    fontStyles = `<style>
-      @font-face {
-        font-family: "ShareSans";
-        font-weight: 400;
-        src: url("data:font/ttf;base64,${regular}") format("truetype");
-      }
-      @font-face {
-        font-family: "ShareSans";
-        font-weight: 700;
-        src: url("data:font/ttf;base64,${bold}") format("truetype");
-      }
-    </style>`;
+function getBoldFont() {
+  if (!boldFont) {
+    boldFont = opentype.parse(readFontFile("NotoSans-Bold.ttf"));
   }
-  return fontStyles;
+  return boldFont;
+}
+
+function textToPaths(text, x, yTop, fontSize, fill, bold = false) {
+  const font = bold ? getBoldFont() : getRegularFont();
+  const scale = fontSize / font.unitsPerEm;
+  const baseline = yTop + font.ascender * scale;
+  let cursor = x;
+  let paths = "";
+
+  for (const char of text) {
+    const glyph = font.charToGlyph(char);
+    const path = glyph.getPath(cursor, baseline, fontSize);
+    paths += `<path d="${path.toPathData(2)}" fill="${fill}"/>`;
+    cursor += glyph.advanceWidth * scale;
+  }
+
+  return paths;
 }
 
 function buildShareSvg(data, origin) {
@@ -91,14 +96,13 @@ function buildShareSvg(data, origin) {
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-  <defs>${getFontStyles()}</defs>
   <rect width="100%" height="100%" fill="#1a1a2e"/>
   <rect x="24" y="24" width="${width - 48}" height="${height - 48}" rx="20" fill="#16213e"/>
   ${cells}
-  <text x="${textX}" y="210" fill="#ffffff" font-family="ShareSans" font-size="42" font-weight="700">${escapeXml("Денешна Загатка")}</text>
-  <text x="${textX}" y="260" fill="#9ca3af" font-family="ShareSans" font-size="30" font-weight="400">${escapeXml(`#${data.puzzleNumber}  ${scoreLabel}`)}</text>
-  <text x="${textX}" y="340" fill="#e5e7eb" font-family="ShareSans" font-size="28" font-weight="700">${escapeXml(headline)}</text>
-  <text x="${textX}" y="390" fill="#60a5fa" font-family="ShareSans" font-size="26" font-weight="400">${escapeXml(displayLink)}</text>
+  ${textToPaths("Денешна Загатка", textX, 168, 42, "#ffffff", true)}
+  ${textToPaths(`#${data.puzzleNumber}  ${scoreLabel}`, textX, 228, 30, "#9ca3af")}
+  ${textToPaths(headline, textX, 308, 28, "#e5e7eb", true)}
+  ${textToPaths(displayLink, textX, 358, 26, "#60a5fa")}
 </svg>`;
 }
 
