@@ -6,7 +6,7 @@ import ResultModal from "./components/ResultModal";
 import StatsModal from "./components/StatsModal";
 import TrainingBanner from "./components/TrainingBanner";
 import { buildShareText, evaluateGuess, isValidWord, mergeKeyboardState } from "./lib/game";
-import { getShareUrl } from "./lib/share";
+import { getSharePageUrl } from "./lib/shareEncode";
 import {
   createNewGame,
   loadGame,
@@ -127,7 +127,13 @@ export default function App() {
   const currentRow = guesses.length;
 
   const shareText = useMemo(
-    () => buildShareText(puzzleNumber, guesses, status === "won", getShareUrl()),
+    () =>
+      buildShareText(
+        puzzleNumber,
+        guesses,
+        status === "won",
+        getSharePageUrl(puzzleNumber, guesses, status === "won")
+      ),
     [puzzleNumber, guesses, status]
   );
 
