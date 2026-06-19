@@ -3,6 +3,8 @@ import sharp from "sharp";
 const PAYLOAD_RE = /^(\d{1,5})-([x\d])-([0123]{30})$/;
 const CELL_FILL = { 1: "#3a3a3c", 2: "#b59f3b", 3: "#538d4e" };
 const FONT = "DejaVu Sans, Liberation Sans, Arial, sans-serif";
+export const SHARE_IMAGE_WIDTH = 1200;
+export const SHARE_IMAGE_HEIGHT = 630;
 
 export function decodeShareParam(encoded) {
   if (!encoded || encoded.length > 80) return null;
@@ -64,19 +66,16 @@ export function getShareImageCaption(data, origin) {
   };
 }
 
-export async function generateSharePng(data, origin) {
-  const scale = 2;
-  const cell = 56 * scale;
-  const gap = 6 * scale;
-  const pad = 32 * scale;
-  const headerH = 52 * scale;
-  const footerH = 68 * scale;
+function buildShareSvg(data, origin) {
+  const width = SHARE_IMAGE_WIDTH;
+  const height = SHARE_IMAGE_HEIGHT;
+  const cell = 44;
+  const gap = 5;
   const gridW = 5 * cell + 4 * gap;
   const gridH = 6 * cell + 5 * gap;
-  const width = gridW + pad * 2;
-  const height = pad + headerH + gridH + footerH + pad;
-  const startX = pad;
-  const startY = pad + headerH;
+  const gridX = 72;
+  const gridY = Math.round((height - gridH) / 2);
+  const textX = gridX + gridW + 56;
 
   const scoreLabel = data.score === "x" ? "X/6" : `${data.score}/6`;
   const { headline, link } = getShareImageCaption(data, origin);
@@ -85,30 +84,31 @@ export async function generateSharePng(data, origin) {
   let cells = "";
   for (let row = 0; row < 6; row++) {
     for (let col = 0; col < 5; col++) {
-      const x = startX + col * (cell + gap);
-      const y = startY + row * (cell + gap);
+      const x = gridX + col * (cell + gap);
+      const y = gridY + row * (cell + gap);
       const value = Number(data.grid[row * 5 + col]);
-      const rx = 6 * scale;
       if (value === 0) {
-        cells += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" rx="${rx}" fill="none" stroke="#3a3a3c" stroke-width="${2 * scale}"/>`;
+        cells += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" rx="6" fill="none" stroke="#3a3a3c" stroke-width="2"/>`;
       } else {
-        cells += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" rx="${rx}" fill="${CELL_FILL[value]}"/>`;
+        cells += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" rx="6" fill="${CELL_FILL[value]}"/>`;
       }
     }
   }
 
-  const footerY = startY + gridH + 20 * scale;
-  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+  return `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
   <rect width="100%" height="100%" fill="#1a1a2e"/>
-  <rect x="${12 * scale}" y="${12 * scale}" width="${width - 24 * scale}" height="${height - 24 * scale}" rx="${16 * scale}" fill="#16213e"/>
-  <text x="${width / 2}" y="${pad + 22 * scale}" text-anchor="middle" fill="#ffffff" font-size="${20 * scale}" font-weight="bold" font-family="${FONT}">Денешна Загатка</text>
-  <text x="${width / 2}" y="${pad + 46 * scale}" text-anchor="middle" fill="#9ca3af" font-size="${16 * scale}" font-family="${FONT}">#${data.puzzleNumber}  ${scoreLabel}</text>
+  <rect x="24" y="24" width="${width - 48}" height="${height - 48}" rx="20" fill="#16213e"/>
   ${cells}
-  <text x="${width / 2}" y="${footerY}" text-anchor="middle" fill="#e5e7eb" font-size="${15 * scale}" font-weight="bold" font-family="${FONT}">${escapeXml(headline)}</text>
-  <text x="${width / 2}" y="${footerY + 26 * scale}" text-anchor="middle" fill="#60a5fa" font-size="${14 * scale}" font-family="${FONT}">${escapeXml(displayLink)}</text>
+  <text x="${textX}" y="210" fill="#ffffff" font-size="42" font-weight="bold" font-family="${FONT}">Денешна Загатка</text>
+  <text x="${textX}" y="260" fill="#9ca3af" font-size="30" font-family="${FONT}">#${data.puzzleNumber}  ${scoreLabel}</text>
+  <text x="${textX}" y="340" fill="#e5e7eb" font-size="28" font-weight="bold" font-family="${FONT}">${escapeXml(headline)}</text>
+  <text x="${textX}" y="390" fill="#60a5fa" font-size="26" font-family="${FONT}">${escapeXml(displayLink)}</text>
 </svg>`;
+}
 
+export async function generateSharePng(data, origin) {
+  const svg = buildShareSvg(data, origin);
   return sharp(Buffer.from(svg)).png().toBuffer();
 }
 

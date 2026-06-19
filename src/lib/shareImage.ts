@@ -3,6 +3,9 @@ import { MAX_GUESSES, WORD_LENGTH } from "../types";
 import { buildShareImageCaption } from "./game";
 import { getShareUrl } from "./share";
 
+const SHARE_WIDTH = 1200;
+const SHARE_HEIGHT = 630;
+
 const STATE_COLORS: Record<LetterState, string | null> = {
   correct: "#538d4e",
   present: "#b59f3b",
@@ -34,48 +37,34 @@ export async function generateShareImage(options: {
   won: boolean;
 }): Promise<Blob> {
   const { puzzleNumber, guesses, won } = options;
-  const cell = 56;
-  const gap = 6;
+  const width = SHARE_WIDTH;
+  const height = SHARE_HEIGHT;
+  const cell = 44;
+  const gap = 5;
   const gridW = WORD_LENGTH * cell + (WORD_LENGTH - 1) * gap;
   const gridH = MAX_GUESSES * cell + (MAX_GUESSES - 1) * gap;
-  const pad = 32;
-  const footerH = 68;
-  const width = gridW + pad * 2;
-  const height = pad + 52 + gridH + footerH + pad;
+  const gridX = 72;
+  const gridY = Math.round((height - gridH) / 2);
+  const textX = gridX + gridW + 56;
 
   const canvas = document.createElement("canvas");
-  const scale = 2;
-  canvas.width = width * scale;
-  canvas.height = height * scale;
+  canvas.width = width;
+  canvas.height = height;
 
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas not supported");
 
-  ctx.scale(scale, scale);
   ctx.fillStyle = "#1a1a2e";
   ctx.fillRect(0, 0, width, height);
 
-  roundRect(ctx, 12, 12, width - 24, height - 24, 16);
+  roundRect(ctx, 24, 24, width - 48, height - 48, 20);
   ctx.fillStyle = "#16213e";
   ctx.fill();
 
-  ctx.fillStyle = "#ffffff";
-  ctx.font = 'bold 20px "Segoe UI", system-ui, sans-serif';
-  ctx.textAlign = "center";
-  ctx.fillText("Денешна Загатка", width / 2, pad + 8);
-
-  const score = won ? `${guesses.length}/6` : "X/6";
-  ctx.fillStyle = "#9ca3af";
-  ctx.font = '16px "Segoe UI", system-ui, sans-serif';
-  ctx.fillText(`#${puzzleNumber}  ${score}`, width / 2, pad + 32);
-
-  const startX = pad;
-  const startY = pad + 52;
-
   for (let row = 0; row < MAX_GUESSES; row++) {
     for (let col = 0; col < WORD_LENGTH; col++) {
-      const x = startX + col * (cell + gap);
-      const y = startY + row * (cell + gap);
+      const x = gridX + col * (cell + gap);
+      const y = gridY + row * (cell + gap);
       const cellData = guesses[row]?.[col];
       const color = cellData ? STATE_COLORS[cellData.state] : null;
 
@@ -98,16 +87,25 @@ export async function generateShareImage(options: {
     guesses.length,
     site
   );
+  const score = won ? `${guesses.length}/6` : "X/6";
+  const displayLink = link.replace(/^https?:\/\//, "");
 
-  const footerY = startY + gridH + 20;
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#ffffff";
+  ctx.font = 'bold 42px "Segoe UI", system-ui, sans-serif';
+  ctx.fillText("Денешна Загатка", textX, 210);
+
+  ctx.fillStyle = "#9ca3af";
+  ctx.font = '30px "Segoe UI", system-ui, sans-serif';
+  ctx.fillText(`#${puzzleNumber}  ${score}`, textX, 260);
+
   ctx.fillStyle = "#e5e7eb";
-  ctx.font = 'bold 15px "Segoe UI", system-ui, sans-serif';
-  ctx.fillText(headline, width / 2, footerY);
+  ctx.font = 'bold 28px "Segoe UI", system-ui, sans-serif';
+  ctx.fillText(headline, textX, 340);
 
   ctx.fillStyle = "#60a5fa";
-  ctx.font = '14px "Segoe UI", system-ui, sans-serif';
-  const displayLink = link.replace(/^https?:\/\//, "");
-  ctx.fillText(displayLink, width / 2, footerY + 26);
+  ctx.font = '26px "Segoe UI", system-ui, sans-serif';
+  ctx.fillText(displayLink, textX, 390);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
