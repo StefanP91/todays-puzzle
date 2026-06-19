@@ -3,6 +3,7 @@ import {
   getShareDescription,
   getShareTitle,
   getSiteOrigin,
+  escapeHtmlAttr,
 } from "./lib/share-data.mjs";
 
 export async function handler(event) {
@@ -19,8 +20,8 @@ export async function handler(event) {
 
   const origin = getSiteOrigin(event);
   const imageUrl = `${origin}/api/share.png?d=${encodeURIComponent(encoded)}`;
-  const title = getShareTitle(data);
-  const description = getShareDescription(data);
+  const title = escapeHtmlAttr(getShareTitle(data));
+  const description = escapeHtmlAttr(getShareDescription(data));
 
   const html = `<!DOCTYPE html>
 <html lang="mk" prefix="og: https://ogp.me/ns#">

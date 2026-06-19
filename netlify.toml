@@ -3,6 +3,9 @@
   command = "npm run build"
   functions = "netlify/functions"
 
+[functions]
+  included_files = ["netlify/functions/lib/fonts/**"]
+
 [[redirects]]
   from = "/api/share"
   to = "/.netlify/functions/share"

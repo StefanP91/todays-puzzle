@@ -1,8 +1,5 @@
-import {
-  decodeShareParam,
-  generateSharePng,
-  getSiteOrigin,
-} from "./lib/share-data.mjs";
+import { decodeShareParam, getSiteOrigin } from "./lib/share-data.mjs";
+import { generateSharePng } from "./lib/share-image.mjs";
 
 export async function handler(event) {
   const encoded = event.queryStringParameters?.d;
