@@ -1,7 +1,8 @@
-import { PNG } from "pngjs";
+import sharp from "sharp";
 
-const GRID_SIZE = 30;
 const PAYLOAD_RE = /^(\d{1,5})-([x\d])-([0123]{30})$/;
+const CELL_FILL = { 1: "#3a3a3c", 2: "#b59f3b", 3: "#538d4e" };
+const FONT = "DejaVu Sans, Liberation Sans, Arial, sans-serif";
 
 export function decodeShareParam(encoded) {
   if (!encoded || encoded.length > 80) return null;
@@ -24,39 +25,12 @@ export function decodeShareParam(encoded) {
   }
 }
 
-const CELL_COLORS = {
-  0: null,
-  1: [0x3a, 0x3a, 0x3c],
-  2: [0xb5, 0x9f, 0x3b],
-  3: [0x53, 0x8d, 0x4e],
-};
-
-const BG = [0x1a, 0x1a, 0x2e];
-const CARD = [0x16, 0x21, 0x3e];
-const BORDER = [0x3a, 0x3a, 0x3c];
-
-function setPixel(png, x, y, rgb) {
-  if (x < 0 || y < 0 || x >= png.width || y >= png.height) return;
-  const idx = (png.width * y + x) << 2;
-  png.data[idx] = rgb[0];
-  png.data[idx + 1] = rgb[1];
-  png.data[idx + 2] = rgb[2];
-  png.data[idx + 3] = 255;
-}
-
-function fillRect(png, x, y, w, h, rgb) {
-  for (let py = y; py < y + h; py++) {
-    for (let px = x; px < x + w; px++) {
-      setPixel(png, px, py, rgb);
-    }
-  }
-}
-
-function strokeRect(png, x, y, w, h, rgb, thickness = 4) {
-  fillRect(png, x, y, w, thickness, rgb);
-  fillRect(png, x, y + h - thickness, w, thickness, rgb);
-  fillRect(png, x, y, thickness, h, rgb);
-  fillRect(png, x + w - thickness, y, thickness, h, rgb);
+function escapeXml(text) {
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 export function getShareTitle(data) {
@@ -74,39 +48,68 @@ export function getShareDescription(data) {
   return `Погодив во ${attempts}! Пробај и ти на Денешна Загатка #${puzzle}.`;
 }
 
-export function generateSharePng(data) {
+export function getShareImageCaption(data, origin) {
+  const link = origin.startsWith("http") ? origin : `https://${origin}`;
+  if (data.score === "x") {
+    return {
+      headline: `Не ја погодив загатка #${data.puzzleNumber}. Пробај и ти:`,
+      link,
+    };
+  }
+  const n = Number(data.score);
+  const attempts = n === 1 ? "1 обид" : `${n} обиди`;
+  return {
+    headline: `Погодив во ${attempts}! Пробај и ти:`,
+    link,
+  };
+}
+
+export async function generateSharePng(data, origin) {
   const scale = 2;
   const cell = 56 * scale;
   const gap = 6 * scale;
   const pad = 32 * scale;
+  const headerH = 52 * scale;
+  const footerH = 68 * scale;
   const gridW = 5 * cell + 4 * gap;
   const gridH = 6 * cell + 5 * gap;
   const width = gridW + pad * 2;
-  const height = gridH + pad * 2;
-
-  const png = new PNG({ width, height });
-  fillRect(png, 0, 0, width, height, BG);
-  fillRect(png, 12, 12, width - 24, height - 24, CARD);
-
+  const height = pad + headerH + gridH + footerH + pad;
   const startX = pad;
-  const startY = pad;
+  const startY = pad + headerH;
 
+  const scoreLabel = data.score === "x" ? "X/6" : `${data.score}/6`;
+  const { headline, link } = getShareImageCaption(data, origin);
+  const displayLink = link.replace(/^https?:\/\//, "");
+
+  let cells = "";
   for (let row = 0; row < 6; row++) {
     for (let col = 0; col < 5; col++) {
       const x = startX + col * (cell + gap);
       const y = startY + row * (cell + gap);
-      const value = data.grid[row * 5 + col];
-      const color = CELL_COLORS[value];
-
-      if (color) {
-        fillRect(png, x, y, cell, cell, color);
+      const value = Number(data.grid[row * 5 + col]);
+      const rx = 6 * scale;
+      if (value === 0) {
+        cells += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" rx="${rx}" fill="none" stroke="#3a3a3c" stroke-width="${2 * scale}"/>`;
       } else {
-        strokeRect(png, x, y, cell, cell, BORDER);
+        cells += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" rx="${rx}" fill="${CELL_FILL[value]}"/>`;
       }
     }
   }
 
-  return PNG.sync.write(png);
+  const footerY = startY + gridH + 20 * scale;
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="#1a1a2e"/>
+  <rect x="${12 * scale}" y="${12 * scale}" width="${width - 24 * scale}" height="${height - 24 * scale}" rx="${16 * scale}" fill="#16213e"/>
+  <text x="${width / 2}" y="${pad + 22 * scale}" text-anchor="middle" fill="#ffffff" font-size="${20 * scale}" font-weight="bold" font-family="${FONT}">Денешна Загатка</text>
+  <text x="${width / 2}" y="${pad + 46 * scale}" text-anchor="middle" fill="#9ca3af" font-size="${16 * scale}" font-family="${FONT}">#${data.puzzleNumber}  ${scoreLabel}</text>
+  ${cells}
+  <text x="${width / 2}" y="${footerY}" text-anchor="middle" fill="#e5e7eb" font-size="${15 * scale}" font-weight="bold" font-family="${FONT}">${escapeXml(headline)}</text>
+  <text x="${width / 2}" y="${footerY + 26 * scale}" text-anchor="middle" fill="#60a5fa" font-size="${14 * scale}" font-family="${FONT}">${escapeXml(displayLink)}</text>
+</svg>`;
+
+  return sharp(Buffer.from(svg)).png().toBuffer();
 }
 
 export function getSiteOrigin(event) {

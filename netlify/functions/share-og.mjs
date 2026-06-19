@@ -1,6 +1,7 @@
 import {
   decodeShareParam,
   generateSharePng,
+  getSiteOrigin,
 } from "./lib/share-data.mjs";
 
 export async function handler(event) {
@@ -15,7 +16,8 @@ export async function handler(event) {
     };
   }
 
-  const png = generateSharePng(data);
+  const origin = getSiteOrigin(event);
+  const png = await generateSharePng(data, origin);
 
   return {
     statusCode: 200,

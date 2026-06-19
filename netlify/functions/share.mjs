@@ -34,7 +34,7 @@ export async function handler(event) {
   <meta property="og:url" content="${origin}/api/share?d=${encodeURIComponent(encoded)}" />
   <meta property="og:image" content="${imageUrl}" />
   <meta property="og:image:width" content="736" />
-  <meta property="og:image:height" content="756" />
+  <meta property="og:image:height" content="1100" />
   <meta property="og:locale" content="mk_MK" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${title}" />

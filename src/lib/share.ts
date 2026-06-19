@@ -167,16 +167,39 @@ function openFacebookDialog(url: string): void {
   }
 }
 
-function openFacebookComposer(sharePageUrl: string): void {
+function openFacebookComposer(sharePageUrl: string, imageUrl: string): void {
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   const params = new URLSearchParams({
     display: "popup",
     u: sharePageUrl,
+    picture: imageUrl,
   });
   const base = isMobile
     ? "https://m.facebook.com/sharer/sharer.php"
     : "https://www.facebook.com/sharer/sharer.php";
   openFacebookDialog(`${base}?${params.toString()}`);
+}
+
+async function tryNativeFacebookImageShare(blob: Blob): Promise<boolean> {
+  if (!navigator.share) return false;
+
+  try {
+    const file = new File([blob], "todays-puzzle.png", { type: "image/png" });
+    const shareData: ShareData = {
+      files: [file],
+      title: "Денешна Загатка",
+    };
+
+    if (!navigator.canShare?.(shareData)) return false;
+
+    await navigator.share(shareData);
+    return true;
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      return true;
+    }
+    return false;
+  }
 }
 
 export async function shareToFacebook(options: {
@@ -193,25 +216,31 @@ export async function shareToFacebook(options: {
   );
   const encoded = encodeShareParam(payload);
   const sharePageUrl = `${site}/api/share?d=${encoded}`;
+  const imageUrl = `${site}/api/share.png?d=${encoded}`;
+
+  if (!isLocalDev()) {
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile) {
+      const blob = await generateShareImage({
+        puzzleNumber: options.puzzleNumber,
+        guesses: options.guesses,
+        won: options.won,
+      });
+      const shared = await tryNativeFacebookImageShare(blob);
+      if (shared) {
+        return { method: "dialog", imageCopied: true, textCopied: false, imageUrl: "" };
+      }
+    }
+
+    openFacebookComposer(sharePageUrl, imageUrl);
+    return { method: "dialog", imageCopied: true, textCopied: false, imageUrl: "" };
+  }
 
   const blob = await generateShareImage({
     puzzleNumber: options.puzzleNumber,
     guesses: options.guesses,
     won: options.won,
   });
-  const imageUrl = blobToObjectUrl(blob);
-  const imageCopied = await copyImageToClipboard(blob);
-
-  if (!isLocalDev()) {
-    openFacebookComposer(sharePageUrl);
-    return { method: "dialog", imageCopied, textCopied: false, imageUrl };
-  }
-
-  if (imageCopied) {
-    openFacebook();
-    URL.revokeObjectURL(imageUrl);
-    return { method: "clipboard", imageCopied, textCopied: false };
-  }
-
-  return { method: "manual", imageUrl };
+  const localImageUrl = blobToObjectUrl(blob);
+  return { method: "manual", imageUrl: localImageUrl };
 }
