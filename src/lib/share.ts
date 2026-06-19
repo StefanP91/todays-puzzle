@@ -202,6 +202,49 @@ async function tryNativeFacebookImageShare(blob: Blob): Promise<boolean> {
   }
 }
 
+export async function shareToInstagram(options: {
+  puzzleNumber: number;
+  guesses: Cell[][];
+  won: boolean;
+}): Promise<"native" | "download"> {
+  const blob = await generateShareImage({
+    puzzleNumber: options.puzzleNumber,
+    guesses: options.guesses,
+    won: options.won,
+  });
+  const file = new File([blob], "deneshna-zagatka.png", { type: "image/png" });
+  const shareData: ShareData = { files: [file], title: "Денешна Загатка" };
+
+  if (navigator.share) {
+    try {
+      if (!navigator.canShare || navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+        return "native";
+      }
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        return "native";
+      }
+    }
+  }
+
+  const imageUrl = blobToObjectUrl(blob);
+  const link = document.createElement("a");
+  link.href = imageUrl;
+  link.download = "deneshna-zagatka.png";
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(imageUrl), 1000);
+
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isMobile) {
+    window.location.href = "instagram://app";
+  } else {
+    openShareWindow("https://www.instagram.com/");
+  }
+
+  return "download";
+}
+
 export async function shareToFacebook(options: {
   shareText: string;
   puzzleNumber: number;
