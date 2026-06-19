@@ -48,6 +48,16 @@ function getBoldFont() {
   return boldFont;
 }
 
+function measureText(text, fontSize, bold = false) {
+  const font = bold ? getBoldFont() : getRegularFont();
+  const scale = fontSize / font.unitsPerEm;
+  let width = 0;
+  for (const char of text) {
+    width += font.charToGlyph(char).advanceWidth * scale;
+  }
+  return width;
+}
+
 function textToPaths(text, x, yTop, fontSize, fill, bold = false) {
   const font = bold ? getBoldFont() : getRegularFont();
   const scale = fontSize / font.unitsPerEm;
@@ -65,20 +75,26 @@ function textToPaths(text, x, yTop, fontSize, fill, bold = false) {
   return paths;
 }
 
+function textToPathsCentered(text, centerX, yTop, fontSize, fill, bold = false) {
+  const width = measureText(text, fontSize, bold);
+  return textToPaths(text, centerX - width / 2, yTop, fontSize, fill, bold);
+}
+
 function buildShareSvg(data, origin) {
   const width = SHARE_IMAGE_WIDTH;
   const height = SHARE_IMAGE_HEIGHT;
-  const cell = 44;
+  const centerX = width / 2;
+  const cell = 38;
   const gap = 5;
   const gridW = 5 * cell + 4 * gap;
   const gridH = 6 * cell + 5 * gap;
-  const gridX = 72;
-  const gridY = Math.round((height - gridH) / 2);
-  const textX = gridX + gridW + 56;
+  const gridX = Math.round((width - gridW) / 2);
+  const gridY = 108;
 
   const scoreLabel = data.score === "x" ? "X/6" : `${data.score}/6`;
   const { headline, link } = getShareImageCaption(data, origin);
   const displayLink = link.replace(/^https?:\/\//, "");
+  const footerY = gridY + gridH + 24;
 
   let cells = "";
   for (let row = 0; row < 6; row++) {
@@ -98,11 +114,11 @@ function buildShareSvg(data, origin) {
 <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
   <rect width="100%" height="100%" fill="#1a1a2e"/>
   <rect x="24" y="24" width="${width - 48}" height="${height - 48}" rx="20" fill="#16213e"/>
+  ${textToPathsCentered("Денешна Загатка", centerX, 36, 38, "#ffffff", true)}
+  ${textToPathsCentered(`#${data.puzzleNumber}  ${scoreLabel}`, centerX, 76, 24, "#9ca3af")}
   ${cells}
-  ${textToPaths("Денешна Загатка", textX, 168, 42, "#ffffff", true)}
-  ${textToPaths(`#${data.puzzleNumber}  ${scoreLabel}`, textX, 228, 30, "#9ca3af")}
-  ${textToPaths(headline, textX, 308, 28, "#e5e7eb", true)}
-  ${textToPaths(displayLink, textX, 358, 26, "#60a5fa")}
+  ${textToPathsCentered(headline, centerX, footerY, 24, "#e5e7eb", true)}
+  ${textToPathsCentered(displayLink, centerX, footerY + 38, 22, "#60a5fa")}
 </svg>`;
 }
 

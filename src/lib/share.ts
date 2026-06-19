@@ -216,7 +216,7 @@ export async function shareToFacebook(options: {
   );
   const encoded = encodeShareParam(payload);
   const sharePageUrl = `${site}/api/share?d=${encoded}`;
-  const imageUrl = `${site}/api/share.png?d=${encoded}`;
+  const imageUrl = `${site}/api/share.png?d=${encoded}&v=5`;
 
   if (!isLocalDev()) {
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);

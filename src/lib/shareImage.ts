@@ -39,13 +39,13 @@ export async function generateShareImage(options: {
   const { puzzleNumber, guesses, won } = options;
   const width = SHARE_WIDTH;
   const height = SHARE_HEIGHT;
-  const cell = 44;
+  const centerX = width / 2;
+  const cell = 38;
   const gap = 5;
   const gridW = WORD_LENGTH * cell + (WORD_LENGTH - 1) * gap;
   const gridH = MAX_GUESSES * cell + (MAX_GUESSES - 1) * gap;
-  const gridX = 72;
-  const gridY = Math.round((height - gridH) / 2);
-  const textX = gridX + gridW + 56;
+  const gridX = Math.round((width - gridW) / 2);
+  const gridY = 108;
 
   const canvas = document.createElement("canvas");
   canvas.width = width;
@@ -60,6 +60,16 @@ export async function generateShareImage(options: {
   roundRect(ctx, 24, 24, width - 48, height - 48, 20);
   ctx.fillStyle = "#16213e";
   ctx.fill();
+
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#ffffff";
+  ctx.font = 'bold 38px "Segoe UI", system-ui, sans-serif';
+  ctx.fillText("Денешна Загатка", centerX, 68);
+
+  const score = won ? `${guesses.length}/6` : "X/6";
+  ctx.fillStyle = "#9ca3af";
+  ctx.font = '24px "Segoe UI", system-ui, sans-serif';
+  ctx.fillText(`#${puzzleNumber}  ${score}`, centerX, 100);
 
   for (let row = 0; row < MAX_GUESSES; row++) {
     for (let col = 0; col < WORD_LENGTH; col++) {
@@ -87,25 +97,16 @@ export async function generateShareImage(options: {
     guesses.length,
     site
   );
-  const score = won ? `${guesses.length}/6` : "X/6";
   const displayLink = link.replace(/^https?:\/\//, "");
-
-  ctx.textAlign = "left";
-  ctx.fillStyle = "#ffffff";
-  ctx.font = 'bold 42px "Segoe UI", system-ui, sans-serif';
-  ctx.fillText("Денешна Загатка", textX, 210);
-
-  ctx.fillStyle = "#9ca3af";
-  ctx.font = '30px "Segoe UI", system-ui, sans-serif';
-  ctx.fillText(`#${puzzleNumber}  ${score}`, textX, 260);
+  const footerY = gridY + gridH + 48;
 
   ctx.fillStyle = "#e5e7eb";
-  ctx.font = 'bold 28px "Segoe UI", system-ui, sans-serif';
-  ctx.fillText(headline, textX, 340);
+  ctx.font = 'bold 24px "Segoe UI", system-ui, sans-serif';
+  ctx.fillText(headline, centerX, footerY);
 
   ctx.fillStyle = "#60a5fa";
-  ctx.font = '26px "Segoe UI", system-ui, sans-serif';
-  ctx.fillText(displayLink, textX, 390);
+  ctx.font = '22px "Segoe UI", system-ui, sans-serif';
+  ctx.fillText(displayLink, centerX, footerY + 34);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {

@@ -19,7 +19,7 @@ export async function handler(event) {
   }
 
   const origin = getSiteOrigin(event);
-  const imageUrl = `${origin}/api/share.png?d=${encodeURIComponent(encoded)}`;
+  const imageUrl = `${origin}/api/share.png?d=${encodeURIComponent(encoded)}&v=5`;
   const title = escapeHtmlAttr(getShareTitle(data));
   const description = escapeHtmlAttr(getShareDescription(data));
 
