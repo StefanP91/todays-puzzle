@@ -1,5 +1,6 @@
 import {
   decodeShareParam,
+  getShareDescription,
   getShareTitle,
   getSiteOrigin,
 } from "./lib/share-data.mjs";
@@ -19,7 +20,7 @@ export async function handler(event) {
   const origin = getSiteOrigin(event);
   const imageUrl = `${origin}/api/share.png?d=${encodeURIComponent(encoded)}`;
   const title = getShareTitle(data);
-  const description = "Погоди го денешниот македонски збор за 6 обиди!";
+  const description = getShareDescription(data);
 
   const html = `<!DOCTYPE html>
 <html lang="mk">
@@ -42,6 +43,7 @@ export async function handler(event) {
   <meta http-equiv="refresh" content="0;url=${origin}/" />
 </head>
 <body>
+  <p>${description}</p>
   <p><a href="${origin}/">Денешна Загатка</a></p>
 </body>
 </html>`;

@@ -61,6 +61,19 @@ export function mergeKeyboardState(
   return next;
 }
 
+export function buildFacebookQuote(
+  puzzleNumber: number,
+  won: boolean,
+  guessCount: number,
+  siteUrl: string
+): string {
+  if (won) {
+    const attempts = guessCount === 1 ? "1 обид" : `${guessCount} обиди`;
+    return `Погодив во ${attempts}! Пробај и ти на ${siteUrl}`;
+  }
+  return `Не ја погодив денешната загатка #${puzzleNumber}. Пробај и ти на ${siteUrl}`;
+}
+
 export function buildShareText(
   puzzleNumber: number,
   guesses: Cell[][],

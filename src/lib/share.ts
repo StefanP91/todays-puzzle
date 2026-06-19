@@ -1,4 +1,5 @@
 import type { Cell } from "../types";
+import { buildFacebookQuote } from "./game";
 import { generateShareImage, blobToObjectUrl } from "./shareImage";
 import {
   buildSharePayload,
@@ -171,8 +172,11 @@ function openFacebookDialog(url: string): void {
   }
 }
 
-function openFacebookSharer(sharePageUrl: string): void {
-  const params = new URLSearchParams({ u: sharePageUrl });
+function openFacebookSharer(sharePageUrl: string, quote: string): void {
+  const params = new URLSearchParams({
+    u: sharePageUrl,
+    quote,
+  });
   openFacebookDialog(`https://www.facebook.com/sharer/sharer.php?${params.toString()}`);
 }
 
@@ -197,12 +201,18 @@ export async function shareToFacebook(options: {
     won: options.won,
   });
   const imageUrl = blobToObjectUrl(blob);
+  const facebookQuote = buildFacebookQuote(
+    options.puzzleNumber,
+    options.won,
+    options.guesses.length,
+    site
+  );
   const imageCopied = await copyImageToClipboard(blob);
-  const textCopied = await copyShareText(options.shareText);
+  const textCopied = await copyShareText(facebookQuote);
 
   if (!isLocalDev()) {
     // sharer.php works without Facebook App Domains; Share Dialog requires href domain whitelist
-    openFacebookSharer(sharePageUrl);
+    openFacebookSharer(sharePageUrl, facebookQuote);
     return { method: "dialog", imageCopied, textCopied, imageUrl };
   }
 

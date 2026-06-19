@@ -64,6 +64,16 @@ export function getShareTitle(data) {
   return `Денешна Загатка #${data.puzzleNumber} — ${scoreLabel}`;
 }
 
+export function getShareDescription(data) {
+  const puzzle = data.puzzleNumber;
+  if (data.score === "x") {
+    return `Не ја погодив денешната загатка #${puzzle} за 6 обиди. Пробај и ти!`;
+  }
+  const n = Number(data.score);
+  const attempts = n === 1 ? "1 обид" : `${n} обиди`;
+  return `Погодив во ${attempts}! Пробај и ти на Денешна Загатка #${puzzle}.`;
+}
+
 export function generateSharePng(data) {
   const scale = 2;
   const cell = 56 * scale;
