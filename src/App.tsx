@@ -250,7 +250,69 @@ export default function App() {
   const isTraining = mode === "training";
 
   return (
-    <div className="app-shell">
+    <>
+      {showStats && (
+        <StatsModal stats={stats} onClose={() => setShowStats(false)} />
+      )}
+
+      {showResult && isDaily && (
+        <ResultModal
+          won={status === "won"}
+          answer={answer}
+          puzzleNumber={puzzleNumber}
+          guessCount={guesses.length}
+          guesses={guesses}
+          shareText={shareText}
+          onClose={() => setShowResult(false)}
+        />
+      )}
+
+      <div className="app-page">
+        {status === "playing" && isDaily && (
+          <div className="game-hint game-info-box game-info-box--outside">
+            <p className="game-info-title">Како се игра</p>
+            <p className="game-info-text">
+              Со <strong>клик на тастатурата</strong> внеси{" "}
+              <strong>5 букви</strong>, па кликни на{" "}
+              <strong className="enter-symbol">⏎</strong>. Имаш{" "}
+              <strong>6 обиди</strong>. Една загатка дневно.
+            </p>
+            <p className="game-info-colors">
+              <span>🟩 точна буква</span>
+              <span>🟨 погрешно место</span>
+              <span>⬛ не постои</span>
+            </p>
+            <p className="game-info-tip">
+              Притисни <strong>💡</strong> за навод поврзан со зборот.
+            </p>
+            <button
+              type="button"
+              onClick={enterTraining}
+              className="mt-3 w-full text-sm font-bold py-2.5 rounded-lg bg-white/10 hover:bg-white/15 active:bg-white/20 transition touch-manipulation"
+            >
+              🏋️ Тренинг — неограничени загатки
+            </button>
+          </div>
+        )}
+
+        {status === "playing" && isTraining && (
+          <div className="game-hint game-info-box game-info-box--training game-info-box--outside">
+            <p className="game-info-title">Тренинг режим</p>
+            <p className="game-info-text">
+              Случаен збор — играј колку сакаш. Не се брои во дневната
+              статистика и не може да се сподели.
+            </p>
+            <button
+              type="button"
+              onClick={exitTraining}
+              className="mt-2 w-full text-sm font-bold py-2.5 rounded-lg bg-white/10 hover:bg-white/15 active:bg-white/20 transition touch-manipulation"
+            >
+              ← Назад на дневна загатка
+            </button>
+          </div>
+        )}
+
+        <div className="app-shell">
       <header className="app-header flex items-center justify-between border-b border-white/10 shrink-0">
         <button
           type="button"
@@ -316,50 +378,6 @@ export default function App() {
           />
         )}
 
-        {status === "playing" && isDaily && (
-          <div className="game-hint game-info-box">
-            <p className="game-info-title">Како се игра</p>
-            <p className="game-info-text">
-              Со <strong>клик на тастатурата</strong> внеси{" "}
-              <strong>5 букви</strong>, па кликни на{" "}
-              <strong className="enter-symbol">⏎</strong>. Имаш{" "}
-              <strong>6 обиди</strong>. Една загатка дневно.
-            </p>
-            <p className="game-info-colors">
-              <span>🟩 точна буква</span>
-              <span>🟨 погрешно место</span>
-              <span>⬛ не постои</span>
-            </p>
-            <p className="game-info-tip">
-              Притисни <strong>💡</strong> за навод поврзан со зборот.
-            </p>
-            <button
-              type="button"
-              onClick={enterTraining}
-              className="mt-3 w-full text-sm font-bold py-2.5 rounded-lg bg-white/10 hover:bg-white/15 active:bg-white/20 transition touch-manipulation"
-            >
-              🏋️ Тренинг — неограничени загатки
-            </button>
-          </div>
-        )}
-
-        {status === "playing" && isTraining && (
-          <div className="game-hint game-info-box game-info-box--training">
-            <p className="game-info-title">Тренинг режим</p>
-            <p className="game-info-text">
-              Случаен збор — играј колку сакаш. Не се брои во дневната
-              статистика и не може да се сподели.
-            </p>
-            <button
-              type="button"
-              onClick={exitTraining}
-              className="mt-2 w-full text-sm font-bold py-2.5 rounded-lg bg-white/10 hover:bg-white/15 active:bg-white/20 transition touch-manipulation"
-            >
-              ← Назад на дневна загатка
-            </button>
-          </div>
-        )}
-
         <div className="game-keyboard-wrap">
           <Keyboard
             onKey={handleKey}
@@ -368,22 +386,8 @@ export default function App() {
           />
         </div>
       </main>
-
-      {showStats && (
-        <StatsModal stats={stats} onClose={() => setShowStats(false)} />
-      )}
-
-      {showResult && isDaily && (
-        <ResultModal
-          won={status === "won"}
-          answer={answer}
-          puzzleNumber={puzzleNumber}
-          guessCount={guesses.length}
-          guesses={guesses}
-          shareText={shareText}
-          onClose={() => setShowResult(false)}
-        />
-      )}
-    </div>
+        </div>
+      </div>
+    </>
   );
 }
