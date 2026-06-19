@@ -108,7 +108,9 @@ export default function SharePanel({
           });
           if (result.method === "dialog") {
             if (result.imageCopied) {
-              setFacebookToast("Сликата е копирана — залепи ја на Facebook (Ctrl+V)");
+              setFacebookToast(
+                "Постот е отворен — залепи ја сликата во полето (Ctrl+V)"
+              );
             } else {
               setFacebookGuide({ method: "manual", imageUrl: result.imageUrl });
             }

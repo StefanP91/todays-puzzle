@@ -1,6 +1,6 @@
 import type { Cell } from "../types";
 import { generateShareImage, blobToObjectUrl } from "./shareImage";
-import { isLocalDev } from "./shareEncode";
+import { buildSharePayload, encodeShareParam, isLocalDev } from "./shareEncode";
 
 export const GAME_SITE_URL = "https://deneshnazagatka.mk";
 
@@ -167,10 +167,16 @@ function openFacebookDialog(url: string): void {
   }
 }
 
-function openFacebookComposer(): void {
+function openFacebookComposer(sharePageUrl: string): void {
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  const url = isMobile ? "https://m.facebook.com/" : "https://www.facebook.com/";
-  openFacebookDialog(url);
+  const params = new URLSearchParams({
+    display: "popup",
+    u: sharePageUrl,
+  });
+  const base = isMobile
+    ? "https://m.facebook.com/sharer/sharer.php"
+    : "https://www.facebook.com/sharer/sharer.php";
+  openFacebookDialog(`${base}?${params.toString()}`);
 }
 
 export async function shareToFacebook(options: {
@@ -179,6 +185,15 @@ export async function shareToFacebook(options: {
   guesses: Cell[][];
   won: boolean;
 }): Promise<FacebookShareResult> {
+  const site = getShareUrl();
+  const payload = buildSharePayload(
+    options.puzzleNumber,
+    options.guesses,
+    options.won
+  );
+  const encoded = encodeShareParam(payload);
+  const sharePageUrl = `${site}/api/share?d=${encoded}`;
+
   const blob = await generateShareImage({
     puzzleNumber: options.puzzleNumber,
     guesses: options.guesses,
@@ -188,7 +203,7 @@ export async function shareToFacebook(options: {
   const imageCopied = await copyImageToClipboard(blob);
 
   if (!isLocalDev()) {
-    openFacebookComposer();
+    openFacebookComposer(sharePageUrl);
     return { method: "dialog", imageCopied, textCopied: false, imageUrl };
   }
 
