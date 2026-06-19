@@ -1,6 +1,7 @@
 import type { Cell, LetterState } from "../types";
 import { MAX_GUESSES, WORD_LENGTH } from "../types";
-import { GAME_SITE_URL, getShareUrl } from "./share";
+import { buildShareImageCaption } from "./game";
+import { getShareUrl } from "./share";
 
 const STATE_COLORS: Record<LetterState, string | null> = {
   correct: "#538d4e",
@@ -38,8 +39,9 @@ export async function generateShareImage(options: {
   const gridW = WORD_LENGTH * cell + (WORD_LENGTH - 1) * gap;
   const gridH = MAX_GUESSES * cell + (MAX_GUESSES - 1) * gap;
   const pad = 32;
+  const footerH = 68;
   const width = gridW + pad * 2;
-  const height = pad + 52 + gridH + 36 + pad;
+  const height = pad + 52 + gridH + footerH + pad;
 
   const canvas = document.createElement("canvas");
   const scale = 2;
@@ -89,10 +91,23 @@ export async function generateShareImage(options: {
     }
   }
 
-  const site = getShareUrl().replace(/^https?:\/\//, "");
-  ctx.fillStyle = "#6b7280";
-  ctx.font = '13px "Segoe UI", system-ui, sans-serif';
-  ctx.fillText(site || GAME_SITE_URL.replace(/^https?:\/\//, ""), width / 2, startY + gridH + 28);
+  const site = getShareUrl();
+  const { headline, link } = buildShareImageCaption(
+    puzzleNumber,
+    won,
+    guesses.length,
+    site
+  );
+
+  const footerY = startY + gridH + 20;
+  ctx.fillStyle = "#e5e7eb";
+  ctx.font = 'bold 15px "Segoe UI", system-ui, sans-serif';
+  ctx.fillText(headline, width / 2, footerY);
+
+  ctx.fillStyle = "#60a5fa";
+  ctx.font = '14px "Segoe UI", system-ui, sans-serif';
+  const displayLink = link.replace(/^https?:\/\//, "");
+  ctx.fillText(displayLink, width / 2, footerY + 26);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {

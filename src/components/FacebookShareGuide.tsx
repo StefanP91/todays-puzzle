@@ -36,9 +36,9 @@ export default function FacebookShareGuide({
   }
 
   const instructions = [
-    "Преземи ја сликата или копирај го текстот",
+    "Преземи ја сликата (линкот е веќе на сликата)",
     "Отвори Facebook → „Што имаш на ум?“",
-    "Додај ја сликата и/или залепи го текстот",
+    "Залепи ја сликата (Ctrl+V) или додај ја како фотографија",
     "Кликни „Сподели“",
   ];
 
@@ -55,7 +55,7 @@ export default function FacebookShareGuide({
           <div className="text-3xl mb-2">📸</div>
           <h3 className="text-lg font-bold">Сподели на Facebook</h3>
           <p className="text-sm text-gray-400 mt-1">
-            Преземи ја сликата и сподели ја на Facebook
+            Линкот и пораката се на сликата — само залепи ја на Facebook
           </p>
         </div>
 

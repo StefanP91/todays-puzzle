@@ -67,11 +67,33 @@ export function buildFacebookQuote(
   guessCount: number,
   siteUrl: string
 ): string {
+  const { headline, link } = buildShareImageCaption(
+    puzzleNumber,
+    won,
+    guessCount,
+    siteUrl
+  );
+  return `${headline} ${link}`;
+}
+
+export function buildShareImageCaption(
+  puzzleNumber: number,
+  won: boolean,
+  guessCount: number,
+  siteUrl: string
+): { headline: string; link: string } {
+  const link = siteUrl.startsWith("http") ? siteUrl : `https://${siteUrl}`;
   if (won) {
     const attempts = guessCount === 1 ? "1 обид" : `${guessCount} обиди`;
-    return `Погодив во ${attempts}! Пробај и ти на ${siteUrl}`;
+    return {
+      headline: `Погодив во ${attempts}! Пробај и ти:`,
+      link,
+    };
   }
-  return `Не ја погодив денешната загатка #${puzzleNumber}. Пробај и ти на ${siteUrl}`;
+  return {
+    headline: `Не ја погодив загатка #${puzzleNumber}. Пробај и ти:`,
+    link,
+  };
 }
 
 export function buildShareText(

@@ -1,11 +1,6 @@
 import type { Cell } from "../types";
-import { buildFacebookQuote } from "./game";
 import { generateShareImage, blobToObjectUrl } from "./shareImage";
-import {
-  buildSharePayload,
-  encodeShareParam,
-  isLocalDev,
-} from "./shareEncode";
+import { isLocalDev } from "./shareEncode";
 
 export const GAME_SITE_URL = "https://deneshnazagatka.mk";
 
@@ -172,12 +167,10 @@ function openFacebookDialog(url: string): void {
   }
 }
 
-function openFacebookSharer(sharePageUrl: string, quote: string): void {
-  const params = new URLSearchParams({
-    u: sharePageUrl,
-    quote,
-  });
-  openFacebookDialog(`https://www.facebook.com/sharer/sharer.php?${params.toString()}`);
+function openFacebookComposer(): void {
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const url = isMobile ? "https://m.facebook.com/" : "https://www.facebook.com/";
+  openFacebookDialog(url);
 }
 
 export async function shareToFacebook(options: {
@@ -186,40 +179,23 @@ export async function shareToFacebook(options: {
   guesses: Cell[][];
   won: boolean;
 }): Promise<FacebookShareResult> {
-  const site = getShareUrl();
-  const payload = buildSharePayload(
-    options.puzzleNumber,
-    options.guesses,
-    options.won
-  );
-  const encoded = encodeShareParam(payload);
-  const sharePageUrl = `${site}/api/share?d=${encoded}`;
-
   const blob = await generateShareImage({
     puzzleNumber: options.puzzleNumber,
     guesses: options.guesses,
     won: options.won,
   });
   const imageUrl = blobToObjectUrl(blob);
-  const facebookQuote = buildFacebookQuote(
-    options.puzzleNumber,
-    options.won,
-    options.guesses.length,
-    site
-  );
   const imageCopied = await copyImageToClipboard(blob);
-  const textCopied = await copyShareText(facebookQuote);
 
   if (!isLocalDev()) {
-    // sharer.php works without Facebook App Domains; Share Dialog requires href domain whitelist
-    openFacebookSharer(sharePageUrl, facebookQuote);
-    return { method: "dialog", imageCopied, textCopied, imageUrl };
+    openFacebookComposer();
+    return { method: "dialog", imageCopied, textCopied: false, imageUrl };
   }
 
-  if (imageCopied || textCopied) {
+  if (imageCopied) {
     openFacebook();
     URL.revokeObjectURL(imageUrl);
-    return { method: "clipboard", imageCopied, textCopied };
+    return { method: "clipboard", imageCopied, textCopied: false };
   }
 
   return { method: "manual", imageUrl };
