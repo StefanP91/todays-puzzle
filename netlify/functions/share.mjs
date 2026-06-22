@@ -6,6 +6,8 @@ import {
   escapeHtmlAttr,
 } from "./lib/share-data.mjs";
 import { getShareContent } from "./lib/share-content.mjs";
+import { ogImageUrl } from "./lib/og-image-url.mjs";
+import { fbAppIdMeta } from "./lib/fb-app-id.mjs";
 
 export async function handler(event) {
   const encoded = event.queryStringParameters?.d;
@@ -20,7 +22,8 @@ export async function handler(event) {
   }
 
   const origin = getSiteOrigin(event);
-  const imageUrl = `${origin}/api/share.png?d=${encodeURIComponent(encoded)}&v=6`;
+  const ogImage = ogImageUrl(origin, data.lang);
+  const resultImageUrl = `${origin}/api/share.png?d=${encodeURIComponent(encoded)}&v=6`;
   const title = escapeHtmlAttr(getShareTitle(data));
   const description = escapeHtmlAttr(getShareDescription(data));
   const content = getShareContent(data.lang);
@@ -31,14 +34,14 @@ export async function handler(event) {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${title}</title>
-  <link rel="image_src" href="${imageUrl}" />
-  <meta property="og:type" content="website" />
+  <link rel="image_src" href="${ogImage}" />
+${fbAppIdMeta(escapeHtmlAttr)}  <meta property="og:type" content="website" />
   <meta property="og:site_name" content="${escapeHtmlAttr(content.gameTitle)}" />
   <meta property="og:title" content="${title}" />
   <meta property="og:description" content="${description}" />
   <meta property="og:url" content="${origin}/api/share?d=${encodeURIComponent(encoded)}" />
-  <meta property="og:image" content="${imageUrl}" />
-  <meta property="og:image:secure_url" content="${imageUrl}" />
+  <meta property="og:image" content="${ogImage}" />
+  <meta property="og:image:secure_url" content="${ogImage}" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -47,12 +50,12 @@ export async function handler(event) {
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${title}" />
   <meta name="twitter:description" content="${description}" />
-  <meta name="twitter:image" content="${imageUrl}" />
+  <meta name="twitter:image" content="${ogImage}" />
 </head>
 <body>
   <h1>${title}</h1>
   <p>${description}</p>
-  <img src="${imageUrl}" alt="${title}" width="1200" height="630" />
+  <img src="${resultImageUrl}" alt="${title}" width="1200" height="630" />
   <p><a href="${origin}/">${escapeHtmlAttr(content.playLink)}</a></p>
 </body>
 </html>`;

@@ -134,6 +134,10 @@ export function applyPageMeta(lang: GameLangCode): void {
   setMeta('meta[property="og:image:width"]', "1200");
   setMeta('meta[property="og:image:height"]', "630");
   setMeta('meta[property="og:image:alt"]', description);
+  const fbAppId = import.meta.env.VITE_FACEBOOK_APP_ID?.trim();
+  if (fbAppId && /^\d+$/.test(fbAppId)) {
+    setMeta('meta[property="fb:app_id"]', fbAppId);
+  }
   setMeta('meta[name="twitter:card"]', "summary_large_image");
   setMeta('meta[name="twitter:title"]', title);
   setMeta('meta[name="twitter:description"]', description);

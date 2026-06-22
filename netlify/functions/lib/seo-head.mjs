@@ -1,4 +1,5 @@
 import { ogImageUrl } from "./og-image-url.mjs";
+import { fbAppIdMeta } from "./fb-app-id.mjs";
 import { VALID_LANGS } from "./share-content.mjs";
 import { getSiteMeta } from "./site-meta.mjs";
 
@@ -102,7 +103,7 @@ export function buildSeoHead({ origin, lang, escapeAttr }) {
   <link rel="canonical" href="${escapeAttr(pageUrl)}" />
 ${hreflangLinks(origin, meta.lang, escapeAttr)}
   <link rel="image_src" href="${imageUrl}" />
-  <meta property="og:type" content="website" />
+${fbAppIdMeta(escapeAttr)}  <meta property="og:type" content="website" />
   <meta property="og:site_name" content="${title}" />
   <meta property="og:title" content="${title}" />
   <meta property="og:description" content="${description}" />

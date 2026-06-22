@@ -125,7 +125,11 @@ export default function SharePanel({
             lang,
           });
           if (result.method === "dialog") {
-            setFacebookToast(content.facebookImageReady);
+            setFacebookToast(
+              result.textCopied
+                ? content.facebookTextCopied
+                : content.facebookImageReady
+            );
             setTimeout(() => setFacebookToast(""), 7000);
           } else if (result.method === "clipboard") {
             setFacebookToast(

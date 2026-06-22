@@ -6,6 +6,8 @@ import { buildSharePayload, encodeShareParam, isLocalDev } from "./shareEncode";
 
 export const GAME_SITE_URL = "https://deneshnazagatka.mk";
 
+const FB_APP_ID = import.meta.env.VITE_FACEBOOK_APP_ID?.trim() ?? "";
+
 export function getShareUrl(): string {
   if (typeof window !== "undefined" && window.location.origin) {
     return window.location.origin;
@@ -165,6 +167,17 @@ function openFacebookDialog(url: string): void {
 
 function openFacebookComposer(sharePageUrl: string): void {
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  if (FB_APP_ID) {
+    const params = new URLSearchParams({
+      app_id: FB_APP_ID,
+      display: "popup",
+      href: sharePageUrl,
+    });
+    openFacebookDialog(`https://www.facebook.com/dialog/share?${params.toString()}`);
+    return;
+  }
+
   const params = new URLSearchParams({
     display: "popup",
     u: sharePageUrl,
@@ -281,8 +294,14 @@ export async function shareToFacebook(options: {
       }
     }
 
+    const textCopied = await copyShareText(options.shareText);
     openFacebookComposer(sharePageUrl);
-    return { method: "dialog", imageCopied: true, textCopied: false, imageUrl: "" };
+    return {
+      method: "dialog",
+      imageCopied: false,
+      textCopied,
+      imageUrl: sharePageUrl,
+    };
   }
 
   const blob = await generateShareImage({
