@@ -5,9 +5,6 @@ declare global {
   }
 }
 
-const GTAG_RETRY_MS = 200;
-const GTAG_MAX_ATTEMPTS = 50;
-
 function pushDataLayer(payload: Record<string, unknown>): void {
   if (typeof window === "undefined") return;
   window.dataLayer = window.dataLayer ?? [];
@@ -25,29 +22,27 @@ function cleanParams(
   return clean;
 }
 
+/**
+ * Send GA4 events after GTM's Google Tag has initialized gtag.
+ * Pushing a function to dataLayer runs it when GTM is ready.
+ */
 function sendGtagEvent(
   name: string,
   params: Record<string, string | number | boolean>,
-  attempt = 0,
 ): void {
-  if (typeof window.gtag === "function") {
-    window.gtag("event", name, params);
-    return;
-  }
-
-  if (attempt < GTAG_MAX_ATTEMPTS) {
-    window.setTimeout(() => sendGtagEvent(name, params, attempt + 1), GTAG_RETRY_MS);
-  }
+  if (typeof window === "undefined") return;
+  window.dataLayer = window.dataLayer ?? [];
+  window.dataLayer.push(function gtagEventCallback() {
+    if (typeof window.gtag === "function") {
+      window.gtag("event", name, params);
+    }
+  });
 }
 
-/** Page views are handled by GTM Google Tag — only push dataLayer for optional GTM triggers. */
+/** GTM Google Tag handles page_view — only expose language on dataLayer for optional triggers. */
 export function trackPageView(lang?: string): void {
-  pushDataLayer({
-    event: "page_view",
-    page_path: window.location.pathname + window.location.search,
-    page_location: window.location.href,
-    page_language: lang ?? "",
-  });
+  if (!lang) return;
+  pushDataLayer({ page_language: lang });
 }
 
 export function trackEvent(
