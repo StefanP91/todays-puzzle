@@ -36,6 +36,27 @@ export function loadGameLanguage(): GameLangCode {
   return DEFAULT_GEO_LANG;
 }
 
+/** Best-effort language from the browser locale (sync, no network). */
+export function languageFromBrowser(): GameLangCode | null {
+  if (typeof navigator === "undefined") return null;
+
+  const locales = navigator.languages?.length ? [...navigator.languages] : [navigator.language];
+  for (const locale of locales) {
+    const code = locale.split("-")[0]?.toLowerCase();
+    if (code && isGameLangCode(code)) return code;
+  }
+
+  return null;
+}
+
+/** Initial language before async geo: URL → saved → browser → English. */
+export function resolveInitialGameLanguage(): GameLangCode {
+  const fromUrl = langFromUrl();
+  if (fromUrl) return fromUrl;
+  if (hasSavedGameLanguage()) return loadGameLanguage();
+  return languageFromBrowser() ?? DEFAULT_GEO_LANG;
+}
+
 export async function resolveGameLanguage(): Promise<GameLangCode> {
   const fromUrl = langFromUrl();
   if (fromUrl) {
@@ -43,7 +64,9 @@ export async function resolveGameLanguage(): Promise<GameLangCode> {
     return fromUrl;
   }
   if (hasSavedGameLanguage()) return loadGameLanguage();
-  const detected = await detectLanguageFromIp();
+
+  const browserLang = languageFromBrowser();
+  const detected = await detectLanguageFromIp(browserLang);
   saveGameLanguage(detected);
   return detected;
 }

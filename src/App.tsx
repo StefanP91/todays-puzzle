@@ -17,8 +17,8 @@ import {
   langFromUrl,
   hasSavedGameLanguage,
   isGameLangCode,
-  loadGameLanguage,
   resolveGameLanguage,
+  resolveInitialGameLanguage,
   saveGameLanguage,
   type GameLangCode,
 } from "./lib/gameLanguage";
@@ -62,7 +62,7 @@ function keyboardFromGuesses(guesses: Cell[][]): Record<string, LetterState> {
 }
 
 export default function App() {
-  const initialLang = langFromUrl() ?? loadGameLanguage();
+  const initialLang = resolveInitialGameLanguage();
 
   const [dictReady, setDictReady] = useState(false);
   const [gameLang, setGameLang] = useState<GameLangCode>(initialLang);
@@ -176,7 +176,7 @@ export default function App() {
     async function init() {
       try {
         const fromUrl = langFromUrl();
-        const lang = fromUrl ?? loadGameLanguage();
+        const lang = fromUrl ?? resolveInitialGameLanguage();
         if (fromUrl) saveGameLanguage(fromUrl);
 
         await ensureDictionary(lang);

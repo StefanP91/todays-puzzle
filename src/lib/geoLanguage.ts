@@ -5,6 +5,14 @@ export const DEFAULT_GEO_LANG: GameLangCode = "en";
 
 const GEO_TIMEOUT_MS = 2500;
 
+/** Countries where IP alone is ambiguous — browser locale can refine the pick. */
+const COUNTRY_BROWSER_LANGS: Partial<Record<string, GameLangCode[]>> = {
+  be: ["nl", "fr", "de"],
+  ca: ["en", "fr"],
+  ch: ["de", "fr", "it"],
+  lu: ["fr", "de"],
+};
+
 /** ISO 3166-1 alpha-2 → playable game language. */
 const COUNTRY_TO_LANG: Record<string, GameLangCode> = {
   mk: "mk",
@@ -64,6 +72,7 @@ const COUNTRY_TO_LANG: Record<string, GameLangCode> = {
   nl: "nl",
   pl: "pl",
   cz: "cs",
+  sk: "cs",
   se: "sv",
   hu: "hu",
   ua: "uk",
@@ -79,9 +88,19 @@ const COUNTRY_TO_LANG: Record<string, GameLangCode> = {
   ph: "en",
 };
 
-export function languageFromCountry(countryCode: string | null | undefined): GameLangCode {
-  if (!countryCode) return DEFAULT_GEO_LANG;
-  return COUNTRY_TO_LANG[countryCode.toLowerCase()] ?? DEFAULT_GEO_LANG;
+export function languageFromCountry(
+  countryCode: string | null | undefined,
+  browserLang: GameLangCode | null = null,
+): GameLangCode {
+  if (!countryCode) return browserLang ?? DEFAULT_GEO_LANG;
+
+  const cc = countryCode.toLowerCase();
+  const allowed = COUNTRY_BROWSER_LANGS[cc];
+  if (allowed && browserLang && allowed.includes(browserLang)) {
+    return browserLang;
+  }
+
+  return COUNTRY_TO_LANG[cc] ?? browserLang ?? DEFAULT_GEO_LANG;
 }
 
 function fetchWithTimeout(url: string, ms: number): Promise<Response> {
@@ -104,24 +123,49 @@ async function fetchCountryFromIpApi(): Promise<string | null> {
   return text.length === 2 ? text : null;
 }
 
-async function detectLanguageFromIpInner(): Promise<GameLangCode> {
+async function detectLanguageFromIpInner(browserLang: GameLangCode | null): Promise<GameLangCode> {
   for (const fetchCountry of [fetchCountryFromNetlify, fetchCountryFromIpApi]) {
     try {
       const country = await fetchCountry();
-      if (country) return languageFromCountry(country);
+      if (country) return languageFromCountry(country, browserLang);
     } catch {
       // try next provider
     }
   }
-  return DEFAULT_GEO_LANG;
+  return browserLang ?? DEFAULT_GEO_LANG;
 }
 
 /** Resolve language from visitor IP; always resolves within a few seconds. */
-export function detectLanguageFromIp(): Promise<GameLangCode> {
+export function detectLanguageFromIp(browserLang: GameLangCode | null = null): Promise<GameLangCode> {
   return Promise.race([
-    detectLanguageFromIpInner(),
+    detectLanguageFromIpInner(browserLang),
     new Promise<GameLangCode>((resolve) => {
-      window.setTimeout(() => resolve(DEFAULT_GEO_LANG), GEO_TIMEOUT_MS + 500);
+      window.setTimeout(() => resolve(browserLang ?? DEFAULT_GEO_LANG), GEO_TIMEOUT_MS + 500);
     }),
   ]);
 }
+
+/** Primary country code for each playable language (for validation/docs). */
+export const PRIMARY_COUNTRY_BY_LANG: Record<GameLangCode, string> = {
+  en: "gb",
+  mk: "mk",
+  sr: "rs",
+  hr: "hr",
+  bs: "ba",
+  sl: "si",
+  sq: "al",
+  bg: "bg",
+  el: "gr",
+  ro: "ro",
+  de: "de",
+  fr: "fr",
+  es: "es",
+  it: "it",
+  pt: "pt",
+  nl: "nl",
+  pl: "pl",
+  cs: "cz",
+  sv: "se",
+  hu: "hu",
+  uk: "ua",
+};
