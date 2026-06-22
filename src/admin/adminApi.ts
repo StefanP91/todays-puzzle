@@ -3,21 +3,23 @@ export interface CountryStat {
   count: number;
 }
 
+export interface DeviceStats {
+  mobile: number;
+  desktop: number;
+}
+
+export interface PeriodStats {
+  total: number;
+  byCountry: CountryStat[];
+  avgDurationSeconds: number | null;
+  durationSessions: number;
+  byDevice: DeviceStats;
+}
+
 export interface AdminStats {
-  today: {
-    date: string;
-    total: number;
-    byCountry: CountryStat[];
-  };
-  month: {
-    month: string;
-    total: number;
-    byCountry: CountryStat[];
-  };
-  allTime: {
-    total: number;
-    byCountry: CountryStat[];
-  };
+  today: PeriodStats & { date: string };
+  month: PeriodStats & { month: string };
+  allTime: PeriodStats;
   dailySeries: { date: string; total: number }[];
 }
 
@@ -98,4 +100,12 @@ export function formatMonthLabel(monthKey: string): string {
     month: "long",
     year: "numeric",
   });
+}
+
+export function formatDuration(seconds: number | null): string {
+  if (seconds == null || seconds <= 0) return "—";
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+  return rest ? `${minutes}m ${rest}s` : `${minutes}m`;
 }

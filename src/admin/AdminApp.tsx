@@ -5,9 +5,11 @@ import {
   checkAdminSession,
   countryLabel,
   fetchAdminStats,
+  formatDuration,
   formatMonthLabel,
   type AdminStats,
   type CountryStat,
+  type PeriodStats,
 } from "./adminApi";
 
 type Tab = "today" | "month" | "all";
@@ -48,6 +50,47 @@ function CountryTable({ rows, total }: { rows: CountryStat[]; total: number }) {
   );
 }
 
+function EngagementStats({ period }: { period: PeriodStats }) {
+  const deviceTotal = period.byDevice.mobile + period.byDevice.desktop;
+
+  return (
+    <div className="admin-engagement-grid">
+      <div className="admin-engagement-card">
+        <span className="admin-engagement-label">Avg. time on site</span>
+        <strong>{formatDuration(period.avgDurationSeconds)}</strong>
+        <span className="admin-engagement-meta">
+          {period.durationSessions > 0
+            ? `from ${period.durationSessions.toLocaleString()} session${period.durationSessions === 1 ? "" : "s"}`
+            : "no duration data yet"}
+        </span>
+      </div>
+      <div className="admin-engagement-card">
+        <span className="admin-engagement-label">Device</span>
+        {deviceTotal > 0 ? (
+          <>
+            <div className="admin-device-bars">
+              <div
+                className="admin-device-bar admin-device-bar--mobile"
+                style={{ width: `${(period.byDevice.mobile / deviceTotal) * 100}%` }}
+              />
+              <div
+                className="admin-device-bar admin-device-bar--desktop"
+                style={{ width: `${(period.byDevice.desktop / deviceTotal) * 100}%` }}
+              />
+            </div>
+            <div className="admin-device-legend">
+              <span>Mobile {percent(period.byDevice.mobile, deviceTotal)}</span>
+              <span>Desktop {percent(period.byDevice.desktop, deviceTotal)}</span>
+            </div>
+          </>
+        ) : (
+          <strong>—</strong>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function DailyChart({ series }: { series: { date: string; total: number }[] }) {
   const max = useMemo(() => Math.max(1, ...series.map((d) => d.total)), [series]);
   if (!series.length) return null;
@@ -55,14 +98,19 @@ function DailyChart({ series }: { series: { date: string; total: number }[] }) {
   return (
     <div className="admin-chart">
       <h3 className="admin-section-title">Last 30 days</h3>
+      <p className="admin-chart-hint">Hover a bar for the date</p>
       <div className="admin-chart-bars">
         {series.slice(-30).map((day) => (
-          <div key={day.date} className="admin-chart-bar-col" title={`${day.date}: ${day.total}`}>
+          <div
+            key={day.date}
+            className="admin-chart-bar-col"
+            title={`${day.date}: ${day.total} visit${day.total === 1 ? "" : "s"}`}
+          >
             <div
               className="admin-chart-bar"
               style={{ height: `${Math.max(4, (day.total / max) * 100)}%` }}
             />
-            <span className="admin-chart-label">{day.date.slice(8)}</span>
+            <span className="admin-chart-label">{day.total}</span>
           </div>
         ))}
       </div>
@@ -160,19 +208,38 @@ export default function AdminApp() {
     );
   }
 
-  const active =
+  const active: { title: string; period: PeriodStats } =
     tab === "today"
-      ? { title: `Today (${stats?.today.date ?? "—"})`, rows: stats?.today.byCountry ?? [], total: stats?.today.total ?? 0 }
+      ? {
+          title: `Today (${stats?.today.date ?? "—"})`,
+          period: stats?.today ?? {
+            total: 0,
+            byCountry: [],
+            avgDurationSeconds: null,
+            durationSessions: 0,
+            byDevice: { mobile: 0, desktop: 0 },
+          },
+        }
       : tab === "month"
         ? {
             title: formatMonthLabel(stats?.month.month ?? ""),
-            rows: stats?.month.byCountry ?? [],
-            total: stats?.month.total ?? 0,
+            period: stats?.month ?? {
+              total: 0,
+              byCountry: [],
+              avgDurationSeconds: null,
+              durationSessions: 0,
+              byDevice: { mobile: 0, desktop: 0 },
+            },
           }
         : {
             title: "All time",
-            rows: stats?.allTime.byCountry ?? [],
-            total: stats?.allTime.total ?? 0,
+            period: stats?.allTime ?? {
+              total: 0,
+              byCountry: [],
+              avgDurationSeconds: null,
+              durationSessions: 0,
+              byDevice: { mobile: 0, desktop: 0 },
+            },
           };
 
   return (
@@ -180,7 +247,7 @@ export default function AdminApp() {
       <header className="admin-header">
         <div>
           <h1>Analytics</h1>
-          <p className="admin-subtitle">Visits by country</p>
+          <p className="admin-subtitle">Visits, time on site, and devices</p>
         </div>
         <div className="admin-header-actions">
           <button type="button" className="admin-btn" onClick={() => loadStats()}>
@@ -224,9 +291,10 @@ export default function AdminApp() {
       <section className="admin-card">
         <h2 className="admin-section-title">{active.title}</h2>
         <p className="admin-total-line">
-          Total visits: <strong>{active.total.toLocaleString()}</strong>
+          Total visits: <strong>{active.period.total.toLocaleString()}</strong>
         </p>
-        <CountryTable rows={active.rows} total={active.total} />
+        <EngagementStats period={active.period} />
+        <CountryTable rows={active.period.byCountry} total={active.period.total} />
       </section>
 
       {stats && <DailyChart series={stats.dailySeries} />}

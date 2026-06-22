@@ -1,4 +1,4 @@
-import { ensureBlobs, recordVisit } from "./lib/analytics-store.mjs";
+import { ensureBlobs, recordDuration, recordVisit } from "./lib/analytics-store.mjs";
 
 export async function handler(event, context) {
   if (event.httpMethod !== "POST") {
@@ -11,9 +11,33 @@ export async function handler(event, context) {
 
   const country = context?.geo?.country?.code ?? null;
 
+  let body = {};
+  try {
+    body = JSON.parse(event.body || "{}");
+  } catch {
+    return {
+      statusCode: 400,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ error: "Invalid JSON body" }),
+    };
+  }
+
   try {
     ensureBlobs(event);
-    const result = await recordVisit(country);
+
+    if (body.type === "duration") {
+      const result = await recordDuration(body.seconds);
+      return {
+        statusCode: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
+        },
+        body: JSON.stringify({ ok: true, ...result }),
+      };
+    }
+
+    const result = await recordVisit(country, body.device);
     return {
       statusCode: 200,
       headers: {
