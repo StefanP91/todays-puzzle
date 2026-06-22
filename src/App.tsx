@@ -35,6 +35,7 @@ import {
 } from "./lib/storage";
 import { pickRandomTrainingWord } from "./lib/training";
 import { applyPageMeta } from "./lib/pageMeta";
+import { trackEvent, trackPageView } from "./lib/analytics";
 import { trackVisitOnce } from "./lib/trackVisit";
 import { normalizeKey, normalizeWord } from "./lib/words";
 import type { Cell, GameStatus, LetterState } from "./types";
@@ -92,6 +93,7 @@ export default function App() {
 
   useEffect(() => {
     applyPageMeta(gameLang);
+    trackPageView(gameLang);
   }, [gameLang]);
 
   useEffect(() => {
@@ -137,6 +139,7 @@ export default function App() {
       saveGameLanguage(code);
       setGameLang(code);
       setMode("daily");
+      trackEvent("language_change", { language: code });
 
       const meta = createNewGame(code);
       applyGameMeta(meta);
@@ -159,8 +162,9 @@ export default function App() {
 
   const enterTraining = useCallback(() => {
     setMode("training");
+    trackEvent("training_start", { language: gameLang });
     startTrainingRound(undefined, 1);
-  }, [startTrainingRound]);
+  }, [startTrainingRound, gameLang]);
 
   const exitTraining = useCallback(() => {
     setMode("daily");
@@ -284,6 +288,13 @@ export default function App() {
 
     if (normalizeWord(currentGuess, gameLang) === normalizeWord(answer, gameLang)) {
       setStatus("won");
+      trackEvent("game_complete", {
+        result: "won",
+        mode,
+        language: gameLang,
+        guesses: newGuesses.length,
+        puzzle_number: puzzleNumber,
+      });
       if (mode === "daily") {
         setShowResult(true);
         if (!statsUpdated) {
@@ -296,6 +307,13 @@ export default function App() {
 
     if (newGuesses.length >= MAX_GUESSES) {
       setStatus("lost");
+      trackEvent("game_complete", {
+        result: "lost",
+        mode,
+        language: gameLang,
+        guesses: newGuesses.length,
+        puzzle_number: puzzleNumber,
+      });
       if (mode === "daily") {
         setShowResult(true);
         if (!statsUpdated) {

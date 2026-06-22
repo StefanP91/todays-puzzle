@@ -16,6 +16,7 @@ import {
   shareToFacebook,
   shareToInstagram,
 } from "../lib/share";
+import { trackEvent } from "../lib/analytics";
 
 interface SharePanelProps {
   shareText: string;
@@ -101,6 +102,13 @@ export default function SharePanel({
   const shareUrl = getShareUrl();
 
   async function handleSocial(id: (typeof SOCIAL_BUTTONS)[number]["id"]) {
+    trackEvent("share", {
+      method: id,
+      language: lang,
+      puzzle_number: puzzleNumber,
+      result: won ? "won" : "lost",
+    });
+
     switch (id) {
       case "whatsapp":
         openShareWindow(getWhatsAppShareUrl(shareText));
@@ -154,6 +162,12 @@ export default function SharePanel({
   }
 
   async function handleCopy() {
+    trackEvent("share", {
+      method: "copy",
+      language: lang,
+      puzzle_number: puzzleNumber,
+      result: won ? "won" : "lost",
+    });
     const ok = await copyShareText(shareText);
     if (ok) {
       setCopied(true);
@@ -162,6 +176,12 @@ export default function SharePanel({
   }
 
   async function handleNativeShare() {
+    trackEvent("share", {
+      method: "native",
+      language: lang,
+      puzzle_number: puzzleNumber,
+      result: won ? "won" : "lost",
+    });
     const shared = await nativeShareWithImage({
       shareText,
       puzzleNumber,

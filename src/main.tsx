@@ -4,6 +4,7 @@ import App from "./App";
 import "./index.css";
 
 import { applyAdminNoIndex } from "./lib/pageMeta";
+import { initAnalytics } from "./lib/analytics";
 
 const AdminApp = lazy(() => import("./admin/AdminApp"));
 
@@ -12,6 +13,8 @@ const isAdmin = path === "/admin";
 
 if (isAdmin) {
   applyAdminNoIndex();
+} else {
+  initAnalytics();
 }
 
 createRoot(document.getElementById("root")!).render(
