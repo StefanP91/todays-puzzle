@@ -1,0 +1,83 @@
+export interface CountryStat {
+  code: string;
+  count: number;
+}
+
+export interface AdminStats {
+  today: {
+    date: string;
+    total: number;
+    byCountry: CountryStat[];
+  };
+  month: {
+    month: string;
+    total: number;
+    byCountry: CountryStat[];
+  };
+  allTime: {
+    total: number;
+    byCountry: CountryStat[];
+  };
+  dailySeries: { date: string; total: number }[];
+}
+
+const jsonHeaders = { "Content-Type": "application/json" };
+
+async function parseJson<T>(response: Response): Promise<T> {
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error((data as { error?: string }).error || "Request failed");
+  }
+  return data as T;
+}
+
+export async function checkAdminSession(): Promise<boolean> {
+  const response = await fetch("/api/admin/session", { credentials: "include" });
+  const data = await parseJson<{ authenticated: boolean }>(response);
+  return data.authenticated;
+}
+
+export async function adminLogin(email: string, password: string): Promise<void> {
+  const response = await fetch("/api/admin/login", {
+    method: "POST",
+    credentials: "include",
+    headers: jsonHeaders,
+    body: JSON.stringify({ email, password }),
+  });
+  await parseJson(response);
+}
+
+export async function adminLogout(): Promise<void> {
+  const response = await fetch("/api/admin/login", {
+    method: "DELETE",
+    credentials: "include",
+  });
+  await parseJson(response);
+}
+
+export async function fetchAdminStats(): Promise<AdminStats> {
+  const response = await fetch("/api/admin/stats", {
+    credentials: "include",
+    cache: "no-store",
+  });
+  return parseJson<AdminStats>(response);
+}
+
+const countryNames = new Intl.DisplayNames(["en"], { type: "region" });
+
+export function countryLabel(code: string): string {
+  if (code === "ZZ") return "Unknown";
+  try {
+    return countryNames.of(code) || code;
+  } catch {
+    return code;
+  }
+}
+
+export function formatMonthLabel(monthKey: string): string {
+  const [year, month] = monthKey.split("-").map(Number);
+  return new Date(year, month - 1, 1).toLocaleDateString("en", {
+    month: "long",
+    year: "numeric",
+  });
+}

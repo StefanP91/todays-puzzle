@@ -37,3 +37,6 @@ coverage/
 
 # Optional local scripts output
 *.log
+
+# Local screenshots / assets (not for repo)
+live-now.png

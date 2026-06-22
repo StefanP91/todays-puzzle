@@ -30,6 +30,30 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/api/track"
+  to = "/.netlify/functions/track-visit"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/admin/login"
+  to = "/.netlify/functions/admin-login"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/admin/session"
+  to = "/.netlify/functions/admin-session"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/admin/stats"
+  to = "/.netlify/functions/admin-stats"
+  status = 200
+  force = true
+
 [[edge_functions]]
   path = "/*"
   function = "og-meta"

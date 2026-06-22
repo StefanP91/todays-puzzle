@@ -33,6 +33,7 @@ import {
 } from "./lib/storage";
 import { pickRandomTrainingWord } from "./lib/training";
 import { applyPageMeta } from "./lib/pageMeta";
+import { trackVisitOnce } from "./lib/trackVisit";
 import { normalizeKey, normalizeWord } from "./lib/words";
 import type { Cell, GameStatus, LetterState } from "./types";
 import { MAX_GUESSES, WORD_LENGTH } from "./types";
@@ -91,6 +92,10 @@ export default function App() {
   useEffect(() => {
     applyPageMeta(gameLang);
   }, [gameLang]);
+
+  useEffect(() => {
+    trackVisitOnce();
+  }, []);
 
   const resetBoard = useCallback(() => {
     const blank = emptyBoard();
