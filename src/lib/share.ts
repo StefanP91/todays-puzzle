@@ -2,8 +2,7 @@ import type { Cell } from "../types";
 import type { GameContent } from "./gameContent";
 import { generateShareImage, blobToObjectUrl } from "./shareImage";
 import type { GameLangCode } from "./gameLanguage";
-import { playUrlWithLang } from "./ogImage";
-import { isLocalDev } from "./shareEncode";
+import { getSharePageUrl, isLocalDev } from "./shareEncode";
 
 export const GAME_SITE_URL = "https://deneshnazagatka.mk";
 
@@ -155,6 +154,10 @@ export type FacebookShareResult =
   | { method: "manual"; imageUrl: string };
 
 
+function stripTrailingUrl(text: string): string {
+  return text.replace(/\n\nhttps?:\/\/\S+\s*$/, "");
+}
+
 function openFacebookDialog(url: string): void {
   const popup = window.open(
     url,
@@ -267,8 +270,12 @@ export async function shareToFacebook(options: {
   content: GameContent;
   lang: GameLangCode;
 }): Promise<FacebookShareResult> {
-  const site = getShareUrl();
-  const facebookPageUrl = playUrlWithLang(site, options.lang);
+  const sharePageUrl = getSharePageUrl(
+    options.puzzleNumber,
+    options.guesses,
+    options.won,
+    options.lang,
+  );
 
   if (!isLocalDev()) {
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -288,13 +295,13 @@ export async function shareToFacebook(options: {
       }
     }
 
-    const textCopied = await copyShareText(options.shareText);
-    openFacebookComposer(facebookPageUrl);
+    const textCopied = await copyShareText(stripTrailingUrl(options.shareText));
+    openFacebookComposer(sharePageUrl);
     return {
       method: "dialog",
       imageCopied: false,
       textCopied,
-      imageUrl: facebookPageUrl,
+      imageUrl: sharePageUrl,
     };
   }
 

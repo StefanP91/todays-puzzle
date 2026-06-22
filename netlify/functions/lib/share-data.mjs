@@ -35,6 +35,12 @@ export function getShareTitle(data) {
   return `${c.gameTitle} #${data.puzzleNumber} — ${scoreLabel}`;
 }
 
+/** Short headline for link previews, e.g. "Погодив во 3 обиди! Пробај и ти:" */
+export function getShareOgTitle(data) {
+  const { headline } = getShareImageCaption(data, "https://today-puzzle.netlify.app");
+  return headline;
+}
+
 export function getShareDescription(data) {
   const c = getShareContent(data.lang);
   const puzzle = data.puzzleNumber;
