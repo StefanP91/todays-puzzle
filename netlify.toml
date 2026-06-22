@@ -102,6 +102,11 @@
   [headers.values]
     Content-Type = "application/xml; charset=utf-8"
 
+[[headers]]
+  for = "/og/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400, immutable"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

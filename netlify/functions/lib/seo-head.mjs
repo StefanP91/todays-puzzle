@@ -1,3 +1,4 @@
+import { ogImageUrl } from "./og-image-url.mjs";
 import { VALID_LANGS } from "./share-content.mjs";
 import { getSiteMeta } from "./site-meta.mjs";
 
@@ -72,7 +73,7 @@ export function buildSeoHead({ origin, lang, escapeAttr }) {
   const seoTitle = SEO_TITLE[meta.lang] || meta.title;
   const seoDescription = SEO_DESCRIPTION[meta.lang] || meta.description;
   const pageUrl = pageUrlForLang(origin, meta.lang);
-  const imageUrl = `${origin}/api/og.png?lang=${meta.lang}`;
+  const imageUrl = ogImageUrl(origin, meta.lang);
 
   const title = escapeAttr(seoTitle);
   const description = escapeAttr(seoDescription);

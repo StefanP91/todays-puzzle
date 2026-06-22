@@ -1,13 +1,14 @@
 import { getSiteOrigin, escapeHtmlAttr } from "./lib/share-data.mjs";
 import { getSiteMeta } from "./lib/site-meta.mjs";
 import { buildSeoHead } from "./lib/seo-head.mjs";
+import { ogImageUrl } from "./lib/og-image-url.mjs";
 
 export async function handler(event) {
   const lang = event.queryStringParameters?.lang ?? "en";
   const meta = getSiteMeta(lang);
   const origin = getSiteOrigin(event);
   const pageUrl = `${origin}/?lang=${meta.lang}`;
-  const imageUrl = `${origin}/api/og.png?lang=${meta.lang}`;
+  const imageUrl = ogImageUrl(origin, meta.lang);
   const head = buildSeoHead({ origin, lang, escapeAttr: escapeHtmlAttr });
 
   const title = escapeHtmlAttr(meta.title);

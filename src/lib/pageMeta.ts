@@ -1,5 +1,6 @@
 import type { GameLangCode } from "./gameLanguage";
 import { getGameContent } from "./gameContent";
+import { ogImageUrl } from "./ogImage";
 import {
   buildJsonLd,
   DEFAULT_SEO_LANG,
@@ -112,7 +113,7 @@ export function applyPageMeta(lang: GameLangCode): void {
   const description = SEO_DESCRIPTION[lang];
   const origin = getSiteOrigin();
   const pageUrl = syncLangInUrl(lang);
-  const imageUrl = `${origin}/api/og.png?lang=${lang}`;
+  const imageUrl = ogImageUrl(origin, lang);
 
   document.title = title;
   document.documentElement.lang = htmlLangFor(lang);

@@ -163,12 +163,11 @@ function openFacebookDialog(url: string): void {
   }
 }
 
-function openFacebookComposer(sharePageUrl: string, imageUrl: string): void {
+function openFacebookComposer(sharePageUrl: string): void {
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   const params = new URLSearchParams({
     display: "popup",
     u: sharePageUrl,
-    picture: imageUrl,
   });
   const base = isMobile
     ? "https://m.facebook.com/sharer/sharer.php"
@@ -263,7 +262,6 @@ export async function shareToFacebook(options: {
   );
   const encoded = encodeShareParam(payload);
   const sharePageUrl = `${site}/api/share?d=${encoded}`;
-  const imageUrl = `${site}/api/share.png?d=${encoded}&v=6`;
 
   if (!isLocalDev()) {
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -283,7 +281,7 @@ export async function shareToFacebook(options: {
       }
     }
 
-    openFacebookComposer(sharePageUrl, imageUrl);
+    openFacebookComposer(sharePageUrl);
     return { method: "dialog", imageCopied: true, textCopied: false, imageUrl: "" };
   }
 

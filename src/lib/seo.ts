@@ -1,6 +1,7 @@
 import type { GameLangCode } from "./gameLanguage";
 import { GAME_LANGUAGES } from "./languages";
 import { getSiteContent } from "./siteContent";
+import { ogImageUrl } from "./ogImage";
 
 export const SEO_LANGS = GAME_LANGUAGES.filter((l) => l.available).map((l) => l.code) as GameLangCode[];
 
@@ -114,7 +115,7 @@ export function buildJsonLd(lang: GameLangCode, origin: string) {
       priceCurrency: "USD",
     },
     inLanguage: htmlLangFor(lang),
-    image: `${origin}/api/og.png?lang=${lang}`,
+    image: ogImageUrl(origin, lang),
   };
 
   const faqPage = {

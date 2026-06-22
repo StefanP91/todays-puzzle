@@ -1,5 +1,5 @@
 const BOT_RE =
-  /facebookexternalhit|Facebot|Twitterbot|WhatsApp|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|Googlebot|bingbot/i;
+  /facebookexternalhit|Facebot|meta-externalagent|Twitterbot|WhatsApp|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|Googlebot|bingbot/i;
 
 const SKIP_PREFIXES = ["/assets/", "/api/", "/.netlify/", "/admin"];
 const SKIP_PATHS = new Set(["/sitemap.xml", "/robots.txt", "/manifest.json", "/icon.svg"]);
