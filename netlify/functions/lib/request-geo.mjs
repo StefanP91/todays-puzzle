@@ -15,6 +15,13 @@ function normalizeCountryCode(value) {
   return /^[A-Z]{2}$/.test(code) ? code : null;
 }
 
+/** Prefer an explicit client country code, then server geo. */
+export function resolveCountry(request, context, explicitCountry) {
+  const fromBody = normalizeCountryCode(explicitCountry);
+  if (fromBody) return fromBody;
+  return countryFromContext(request, context);
+}
+
 /** Read visitor country from a modern Netlify Function request/context. */
 export function countryFromContext(request, context) {
   const fromContext = context?.geo?.country?.code;

@@ -36,6 +36,24 @@ function postTrack(payload: Record<string, unknown>): void {
   }).catch(() => {});
 }
 
+async function fetchVisitorCountry(): Promise<string | null> {
+  try {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 3000);
+    const res = await fetch("/api/geo", {
+      credentials: "same-origin",
+      signal: controller.signal,
+    });
+    window.clearTimeout(timer);
+    if (!res.ok) return null;
+    const data = (await res.json()) as { country?: string | null };
+    const code = data.country?.trim().toUpperCase();
+    return code && /^[A-Z]{2}$/.test(code) ? code : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Record one visit per browser session (server stores country from IP). */
 export function trackVisitOnce(): void {
   if (typeof window === "undefined") return;
@@ -45,15 +63,21 @@ export function trackVisitOnce(): void {
 
   if (!sessionStorage.getItem(VISIT_KEY)) {
     sessionStorage.setItem(VISIT_KEY, "1");
-    fetch("/api/track", {
-      method: "POST",
-      credentials: "same-origin",
-      keepalive: true,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "visit", device: getDevice() }),
-    }).catch(() => {
-      sessionStorage.removeItem(VISIT_KEY);
-    });
+    void (async () => {
+      const country = await fetchVisitorCountry();
+      try {
+        const res = await fetch("/api/track", {
+          method: "POST",
+          credentials: "same-origin",
+          keepalive: true,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "visit", device: getDevice(), country }),
+        });
+        if (!res.ok) sessionStorage.removeItem(VISIT_KEY);
+      } catch {
+        sessionStorage.removeItem(VISIT_KEY);
+      }
+    })();
   }
 
   function sendDuration(): void {

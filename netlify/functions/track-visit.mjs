@@ -1,5 +1,5 @@
 import { recordDuration, recordVisit } from "./lib/analytics-store.mjs";
-import { countryFromContext } from "./lib/request-geo.mjs";
+import { resolveCountry } from "./lib/request-geo.mjs";
 
 export default async function handler(request, context) {
   if (request.method !== "POST") {
@@ -9,14 +9,14 @@ export default async function handler(request, context) {
     });
   }
 
-  const country = countryFromContext(request, context);
-
   let body = {};
   try {
     body = await request.json();
   } catch {
     return Response.json({ error: "Invalid JSON body" }, { status: 400 });
   }
+
+  const country = resolveCountry(request, context, body.country);
 
   try {
     if (body.type === "duration") {
