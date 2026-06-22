@@ -1,6 +1,11 @@
-import { getStore } from "@netlify/blobs";
+import { connectLambda, getStore } from "@netlify/blobs";
 
 const STORE_NAME = "puzzle-analytics";
+
+/** Required before any blob access in Lambda-compatible Netlify Functions. */
+export function ensureBlobs(event) {
+  connectLambda(event);
+}
 
 function getStoreInstance() {
   return getStore(STORE_NAME);

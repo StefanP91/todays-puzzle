@@ -1,4 +1,4 @@
-import { recordVisit } from "./lib/analytics-store.mjs";
+import { ensureBlobs, recordVisit } from "./lib/analytics-store.mjs";
 
 export async function handler(event, context) {
   if (event.httpMethod !== "POST") {
@@ -12,6 +12,7 @@ export async function handler(event, context) {
   const country = context?.geo?.country?.code ?? null;
 
   try {
+    ensureBlobs(event);
     const result = await recordVisit(country);
     return {
       statusCode: 200,

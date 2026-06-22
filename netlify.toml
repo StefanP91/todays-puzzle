@@ -3,6 +3,12 @@
   command = "npm run build"
   functions = "netlify/functions"
 
+[dev]
+  command = "npm run dev"
+  targetPort = 5173
+  port = 8888
+  autoLaunch = false
+
 [functions]
   included_files = ["netlify/functions/lib/fonts/**"]
 

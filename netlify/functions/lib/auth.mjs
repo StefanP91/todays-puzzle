@@ -65,13 +65,19 @@ export function isAuthorizedAdmin(event) {
   return verifySessionToken(token);
 }
 
+function cookieAttributes(maxAge) {
+  const secure =
+    process.env.NETLIFY_DEV === "true" || process.env.CONTEXT === "dev" ? "" : " Secure;";
+  return `Path=/; HttpOnly;${secure} SameSite=Strict; Max-Age=${maxAge}`;
+}
+
 export function sessionCookieHeader(token) {
   const maxAge = Math.floor(TOKEN_TTL_MS / 1000);
-  return `${COOKIE_NAME}=${encodeURIComponent(token)}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAge}`;
+  return `${COOKIE_NAME}=${encodeURIComponent(token)}; ${cookieAttributes(maxAge)}`;
 }
 
 export function clearSessionCookieHeader() {
-  return `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`;
+  return `${COOKIE_NAME}=; ${cookieAttributes(0)}`;
 }
 
 export function unauthorizedResponse() {

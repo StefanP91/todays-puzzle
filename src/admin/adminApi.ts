@@ -24,7 +24,25 @@ export interface AdminStats {
 const jsonHeaders = { "Content-Type": "application/json" };
 
 async function parseJson<T>(response: Response): Promise<T> {
-  const data = await response.json();
+  const text = await response.text();
+  if (!text.trim()) {
+    throw new Error(
+      "Admin API is not available on this server. For local development run «npm run dev:netlify», or sign in at https://today-puzzle.netlify.app/admin",
+    );
+  }
+
+  let data: unknown;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    if (text.trimStart().startsWith("<!")) {
+      throw new Error(
+        "Admin API is not available on the Vite dev server. Run «npm run dev:netlify» or use https://today-puzzle.netlify.app/admin",
+      );
+    }
+    throw new Error("Invalid response from server");
+  }
+
   if (!response.ok) {
     throw new Error((data as { error?: string }).error || "Request failed");
   }

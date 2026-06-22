@@ -1,4 +1,4 @@
-import { getAggregatedStats } from "./lib/analytics-store.mjs";
+import { ensureBlobs, getAggregatedStats } from "./lib/analytics-store.mjs";
 import { isAuthorizedAdmin, unauthorizedResponse } from "./lib/auth.mjs";
 
 export async function handler(event) {
@@ -15,6 +15,7 @@ export async function handler(event) {
   }
 
   try {
+    ensureBlobs(event);
     const stats = await getAggregatedStats();
     return {
       statusCode: 200,
