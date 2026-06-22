@@ -1,5 +1,3 @@
-const MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID?.trim() ?? "";
-
 declare global {
   interface Window {
     dataLayer?: Record<string, unknown>[];
@@ -7,11 +5,8 @@ declare global {
   }
 }
 
-let gtagInitialized = false;
-
-export function isAnalyticsEnabled(): boolean {
-  return /^G-[A-Z0-9]+$/i.test(MEASUREMENT_ID);
-}
+const GTAG_RETRY_MS = 250;
+const GTAG_MAX_ATTEMPTS = 40;
 
 function pushDataLayer(payload: Record<string, unknown>): void {
   if (typeof window === "undefined") return;
@@ -19,58 +14,50 @@ function pushDataLayer(payload: Record<string, unknown>): void {
   window.dataLayer.push(payload);
 }
 
-/** Optional direct GA4 (gtag). GTM in index.html works without this. */
-export function initAnalytics(): void {
-  if (typeof window === "undefined" || !isAnalyticsEnabled() || gtagInitialized) return;
+function cleanParams(
+  params?: Record<string, string | number | boolean | undefined>,
+): Record<string, string | number | boolean> {
+  const clean: Record<string, string | number | boolean> = {};
+  if (!params) return clean;
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined) clean[key] = value;
+  }
+  return clean;
+}
 
-  window.dataLayer = window.dataLayer ?? [];
-  window.gtag = function gtag(...args: unknown[]) {
-    window.dataLayer!.push(args as unknown as Record<string, unknown>);
-  };
+/** Wait for GTM Google Tag to expose window.gtag, then send the GA4 event. */
+function sendGtagEvent(
+  name: string,
+  params: Record<string, string | number | boolean>,
+  attempt = 0,
+): void {
+  if (typeof window.gtag === "function") {
+    window.gtag("event", name, params);
+    return;
+  }
 
-  window.gtag("js", new Date());
-  window.gtag("config", MEASUREMENT_ID, {
-    send_page_view: false,
-    anonymize_ip: true,
-  });
+  if (attempt >= GTAG_MAX_ATTEMPTS) return;
 
-  const script = document.createElement("script");
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(MEASUREMENT_ID)}`;
-  document.head.appendChild(script);
-
-  gtagInitialized = true;
+  window.setTimeout(() => sendGtagEvent(name, params, attempt + 1), GTAG_RETRY_MS);
 }
 
 export function trackPageView(lang?: string): void {
-  const payload = {
-    event: "page_view",
+  const params = {
     page_path: window.location.pathname + window.location.search,
     page_location: window.location.href,
-    page_language: lang,
+    page_language: lang ?? "",
   };
 
-  pushDataLayer(payload);
-
-  if (gtagInitialized && window.gtag) {
-    window.gtag("event", "page_view", payload);
-  }
+  pushDataLayer({ event: "page_view", ...params });
+  sendGtagEvent("page_view", params);
 }
 
 export function trackEvent(
   name: string,
   params?: Record<string, string | number | boolean | undefined>,
 ): void {
-  const clean: Record<string, string | number | boolean> = {};
-  if (params) {
-    for (const [key, value] of Object.entries(params)) {
-      if (value !== undefined) clean[key] = value;
-    }
-  }
+  const clean = cleanParams(params);
 
   pushDataLayer({ event: name, ...clean });
-
-  if (gtagInitialized && window.gtag) {
-    window.gtag("event", name, clean);
-  }
+  sendGtagEvent(name, clean);
 }
