@@ -102,6 +102,14 @@ export function formatMonthLabel(monthKey: string): string {
   });
 }
 
+/** Display stored YYYY-MM-DD keys as DD-MM-YYYY. */
+export function formatDisplayDate(dateKey: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateKey);
+  if (!match) return dateKey;
+  const [, year, month, day] = match;
+  return `${day}-${month}-${year}`;
+}
+
 export function formatDuration(seconds: number | null): string {
   if (seconds == null || seconds <= 0) return "—";
   if (seconds < 60) return `${seconds}s`;

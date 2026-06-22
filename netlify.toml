@@ -63,6 +63,7 @@
 [[edge_functions]]
   path = "/*"
   function = "og-meta"
+  excludedPath = ["/admin", "/api/*"]
 
 [[redirects]]
   from = "/*"

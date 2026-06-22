@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   adminLogin,
   adminLogout,
   checkAdminSession,
   countryLabel,
   fetchAdminStats,
+  formatDisplayDate,
   formatDuration,
   formatMonthLabel,
   type AdminStats,
@@ -104,7 +105,7 @@ function DailyChart({ series }: { series: { date: string; total: number }[] }) {
           <div
             key={day.date}
             className="admin-chart-bar-col"
-            title={`${day.date}: ${day.total} visit${day.total === 1 ? "" : "s"}`}
+            title={`${formatDisplayDate(day.date)}: ${day.total} visit${day.total === 1 ? "" : "s"}`}
           >
             <div
               className="admin-chart-bar"
@@ -126,11 +127,30 @@ export default function AdminApp() {
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [tab, setTab] = useState<Tab>("today");
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const refreshInFlight = useRef(false);
 
   const loadStats = useCallback(async () => {
     const data = await fetchAdminStats();
     setStats(data);
+    setLastUpdated(new Date());
   }, []);
+
+  const handleRefresh = useCallback(async () => {
+    if (refreshInFlight.current) return;
+    refreshInFlight.current = true;
+    setRefreshing(true);
+    setError("");
+    try {
+      await loadStats();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load stats");
+    } finally {
+      refreshInFlight.current = false;
+      setRefreshing(false);
+    }
+  }, [loadStats]);
 
   useEffect(() => {
     document.title = "Admin — Today's Puzzle";
@@ -141,8 +161,8 @@ export default function AdminApp() {
 
   useEffect(() => {
     if (!authenticated) return;
-    loadStats().catch((err) => setError(err instanceof Error ? err.message : "Failed to load stats"));
-  }, [authenticated, loadStats]);
+    void handleRefresh();
+  }, [authenticated, handleRefresh]);
 
   async function handleLogin(event: React.FormEvent) {
     event.preventDefault();
@@ -211,7 +231,7 @@ export default function AdminApp() {
   const active: { title: string; period: PeriodStats } =
     tab === "today"
       ? {
-          title: `Today (${stats?.today.date ?? "—"})`,
+          title: `Today (${stats?.today.date ? formatDisplayDate(stats.today.date) : "—"})`,
           period: stats?.today ?? {
             total: 0,
             byCountry: [],
@@ -250,14 +270,29 @@ export default function AdminApp() {
           <p className="admin-subtitle">Visits, time on site, and devices</p>
         </div>
         <div className="admin-header-actions">
-          <button type="button" className="admin-btn" onClick={() => loadStats()}>
-            Refresh
+          <button
+            type="button"
+            className={`admin-btn admin-btn-refresh${refreshing ? " is-refreshing" : ""}`}
+            onClick={() => void handleRefresh()}
+            disabled={refreshing}
+            aria-busy={refreshing}
+          >
+            <span className="admin-refresh-icon" aria-hidden>
+              ↻
+            </span>
+            {refreshing ? "Refreshing…" : "Refresh"}
           </button>
-          <button type="button" className="admin-btn" onClick={handleLogout}>
+          <button type="button" className="admin-btn" onClick={handleLogout} disabled={refreshing}>
             Log out
           </button>
         </div>
       </header>
+
+      {lastUpdated && (
+        <p className="admin-updated-line">
+          Last updated: {lastUpdated.toLocaleTimeString()}
+        </p>
+      )}
 
       <div className="admin-summary-grid">
         <button
@@ -288,6 +323,7 @@ export default function AdminApp() {
 
       {error && <p className="admin-error">{error}</p>}
 
+      <div className={`admin-dashboard${refreshing ? " is-refreshing" : ""}`}>
       <section className="admin-card">
         <h2 className="admin-section-title">{active.title}</h2>
         <p className="admin-total-line">
@@ -298,6 +334,7 @@ export default function AdminApp() {
       </section>
 
       {stats && <DailyChart series={stats.dailySeries} />}
+      </div>
     </div>
   );
 }

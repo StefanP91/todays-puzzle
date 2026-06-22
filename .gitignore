@@ -41,3 +41,7 @@ coverage/
 # Local screenshots / assets (not for repo)
 live-now.png
 admin-credentials.txt
+
+# Local scratch / tooling (not for deploy)
+deno.lock
+scripts/_*
