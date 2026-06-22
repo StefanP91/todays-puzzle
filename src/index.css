@@ -877,6 +877,12 @@ body {
   font-size: 1.1rem;
 }
 
+.admin-section-title--sub {
+  margin-top: 1.25rem;
+  font-size: 0.95rem;
+  color: #d1d5db;
+}
+
 .admin-total-line {
   margin: 0 0 1rem;
   color: #d1d5db;

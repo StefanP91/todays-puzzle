@@ -8,12 +8,18 @@ export interface DeviceStats {
   desktop: number;
 }
 
+export interface SourceStat {
+  key: string;
+  count: number;
+}
+
 export interface PeriodStats {
   total: number;
   byCountry: CountryStat[];
   avgDurationSeconds: number | null;
   durationSessions: number;
   byDevice: DeviceStats;
+  bySource: SourceStat[];
 }
 
 export interface AdminStats {
@@ -116,4 +122,31 @@ export function formatDuration(seconds: number | null): string {
   const minutes = Math.floor(seconds / 60);
   const rest = seconds % 60;
   return rest ? `${minutes}m ${rest}s` : `${minutes}m`;
+}
+
+const SOURCE_LABELS: Record<string, string> = {
+  direct: "Direct / bookmark",
+  facebook: "Facebook",
+  instagram: "Instagram",
+  google: "Google",
+  bing: "Bing",
+  yahoo: "Yahoo",
+  duckduckgo: "DuckDuckGo",
+  twitter: "X (Twitter)",
+  linkedin: "LinkedIn",
+  tiktok: "TikTok",
+  whatsapp: "WhatsApp",
+  telegram: "Telegram",
+  pinterest: "Pinterest",
+  reddit: "Reddit",
+  youtube: "YouTube",
+  snapchat: "Snapchat",
+  messenger: "Messenger",
+  viber: "Viber",
+  email: "Email",
+  other: "Other websites",
+};
+
+export function sourceLabel(key: string): string {
+  return SOURCE_LABELS[key] || key;
 }

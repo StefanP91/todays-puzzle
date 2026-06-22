@@ -27,7 +27,14 @@ export default async function handler(request, context) {
       );
     }
 
-    const result = await recordVisit(country, body.device);
+    const trafficInput = {
+      referrer: body.referrer,
+      utmSource: body.utmSource,
+      utmMedium: body.utmMedium,
+      pageUrl: body.pageUrl,
+    };
+
+    const result = await recordVisit(country, body.device, trafficInput);
     return Response.json(
       { ok: true, ...result, country },
       { headers: { "Cache-Control": "no-store" } },

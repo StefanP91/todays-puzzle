@@ -54,6 +54,21 @@ async function fetchVisitorCountry(): Promise<string | null> {
   }
 }
 
+function getTrafficContext(): {
+  referrer: string | null;
+  utmSource: string | null;
+  utmMedium: string | null;
+  pageUrl: string;
+} {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    referrer: document.referrer || null,
+    utmSource: params.get("utm_source"),
+    utmMedium: params.get("utm_medium"),
+    pageUrl: window.location.href,
+  };
+}
+
 /** Record one visit per browser session (server stores country from IP). */
 export function trackVisitOnce(): void {
   if (typeof window === "undefined") return;
@@ -71,7 +86,12 @@ export function trackVisitOnce(): void {
           credentials: "same-origin",
           keepalive: true,
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type: "visit", device: getDevice(), country }),
+          body: JSON.stringify({
+            type: "visit",
+            device: getDevice(),
+            country,
+            ...getTrafficContext(),
+          }),
         });
         if (!res.ok) sessionStorage.removeItem(VISIT_KEY);
       } catch {
