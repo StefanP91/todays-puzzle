@@ -5,20 +5,8 @@ declare global {
   }
 }
 
-let eventsGtagReady = false;
-
-function getMeasurementId(): string | null {
-  const fromEnv = import.meta.env.VITE_GA_MEASUREMENT_ID?.trim();
-  if (fromEnv && /^G-/i.test(fromEnv)) return fromEnv;
-
-  const fromMeta = document
-    .querySelector('meta[name="ga-measurement-id"]')
-    ?.getAttribute("content")
-    ?.trim();
-  if (fromMeta && /^G-/i.test(fromMeta)) return fromMeta;
-
-  return null;
-}
+const GTAG_RETRY_MS = 200;
+const GTAG_MAX_ATTEMPTS = 50;
 
 function pushDataLayer(payload: Record<string, unknown>): void {
   if (typeof window === "undefined") return;
@@ -37,42 +25,22 @@ function cleanParams(
   return clean;
 }
 
-/** Load gtag for custom events only (GTM keeps page views). */
-export function initEventAnalytics(): void {
-  if (typeof window === "undefined" || eventsGtagReady) return;
-  if (window.location.pathname.startsWith("/admin")) return;
-
-  const measurementId = getMeasurementId();
-  if (!measurementId) return;
-
-  window.dataLayer = window.dataLayer ?? [];
-  if (!window.gtag) {
-    window.gtag = function gtag(...args: unknown[]) {
-      window.dataLayer!.push(args);
-    };
-    window.gtag("js", new Date());
+function sendGtagEvent(
+  name: string,
+  params: Record<string, string | number | boolean>,
+  attempt = 0,
+): void {
+  if (typeof window.gtag === "function") {
+    window.gtag("event", name, params);
+    return;
   }
 
-  window.gtag("config", measurementId, { send_page_view: false });
-
-  if (!document.querySelector(`script[data-ga-events="${measurementId}"]`)) {
-    const script = document.createElement("script");
-    script.async = true;
-    script.dataset.gaEvents = measurementId;
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
-    document.head.appendChild(script);
+  if (attempt < GTAG_MAX_ATTEMPTS) {
+    window.setTimeout(() => sendGtagEvent(name, params, attempt + 1), GTAG_RETRY_MS);
   }
-
-  eventsGtagReady = true;
 }
 
-function sendGtagEvent(name: string, params: Record<string, string | number | boolean>): void {
-  initEventAnalytics();
-  if (!eventsGtagReady || !window.gtag) return;
-  window.gtag("event", name, params);
-}
-
-/** Virtual page view on language change (optional; GTM already tracks the initial load). */
+/** Page views are handled by GTM Google Tag — only push dataLayer for optional GTM triggers. */
 export function trackPageView(lang?: string): void {
   pushDataLayer({
     event: "page_view",
@@ -86,6 +54,8 @@ export function trackEvent(
   name: string,
   params?: Record<string, string | number | boolean | undefined>,
 ): void {
+  if (typeof window !== "undefined" && window.location.pathname.startsWith("/admin")) return;
+
   const clean = cleanParams(params);
   pushDataLayer({ event: name, ...clean });
   sendGtagEvent(name, clean);
