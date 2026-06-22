@@ -119,11 +119,10 @@ export async function loadAllDayStats(event) {
 
 /** Merge day stats into a country|source matrix (supports legacy country-only rows). */
 function mergeMatrix(target, stats) {
-  if (stats._matrix && Object.keys(stats._matrix).length > 0) {
+  if (stats._matrix) {
     for (const [key, count] of Object.entries(stats._matrix)) {
       target[key] = (target[key] || 0) + count;
     }
-    return;
   }
 
   for (const [code, count] of Object.entries(stats)) {
