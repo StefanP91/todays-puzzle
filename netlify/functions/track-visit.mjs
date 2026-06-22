@@ -1,57 +1,39 @@
-import { ensureBlobs, recordDuration, recordVisit } from "./lib/analytics-store.mjs";
+import { recordDuration, recordVisit } from "./lib/analytics-store.mjs";
+import { countryFromContext } from "./lib/request-geo.mjs";
 
-export async function handler(event, context) {
-  if (event.httpMethod !== "POST") {
-    return {
-      statusCode: 405,
+export default async function handler(request, context) {
+  if (request.method !== "POST") {
+    return new Response("Method not allowed", {
+      status: 405,
       headers: { Allow: "POST" },
-      body: "Method not allowed",
-    };
+    });
   }
 
-  const country = context?.geo?.country?.code ?? null;
+  const country = countryFromContext(request, context);
 
   let body = {};
   try {
-    body = JSON.parse(event.body || "{}");
+    body = await request.json();
   } catch {
-    return {
-      statusCode: 400,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: "Invalid JSON body" }),
-    };
+    return Response.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
   try {
-    ensureBlobs(event);
-
     if (body.type === "duration") {
       const result = await recordDuration(body.seconds);
-      return {
-        statusCode: 200,
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control": "no-store",
-        },
-        body: JSON.stringify({ ok: true, ...result }),
-      };
+      return Response.json(
+        { ok: true, ...result },
+        { headers: { "Cache-Control": "no-store" } },
+      );
     }
 
     const result = await recordVisit(country, body.device);
-    return {
-      statusCode: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-store",
-      },
-      body: JSON.stringify({ ok: true, ...result }),
-    };
+    return Response.json(
+      { ok: true, ...result, country },
+      { headers: { "Cache-Control": "no-store" } },
+    );
   } catch (error) {
     console.error("track-visit failed:", error);
-    return {
-      statusCode: 500,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ok: false, error: "Failed to record visit" }),
-    };
+    return Response.json({ ok: false, error: "Failed to record visit" }, { status: 500 });
   }
 }

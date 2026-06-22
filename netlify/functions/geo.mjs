@@ -1,13 +1,13 @@
-/** Returns ISO country code from the visitor IP (Netlify geo). */
-export async function handler(_event, context) {
-  const country = context?.geo?.country?.code ?? null;
+import { countryFromContext } from "./lib/request-geo.mjs";
 
-  return {
-    statusCode: 200,
-    headers: {
-      "Content-Type": "application/json",
-      "Cache-Control": "no-store",
+/** Returns ISO country code from the visitor IP (Netlify geo). */
+export default async function handler(request, context) {
+  const country = countryFromContext(request, context);
+
+  return Response.json(
+    { country },
+    {
+      headers: { "Cache-Control": "no-store" },
     },
-    body: JSON.stringify({ country }),
-  };
+  );
 }

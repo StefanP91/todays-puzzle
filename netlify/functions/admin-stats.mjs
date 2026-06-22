@@ -16,7 +16,7 @@ export async function handler(event) {
 
   try {
     ensureBlobs(event);
-    const stats = await getAggregatedStats();
+    const stats = await getAggregatedStats(event);
     return {
       statusCode: 200,
       headers: {

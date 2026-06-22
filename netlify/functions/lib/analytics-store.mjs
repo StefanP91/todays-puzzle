@@ -8,7 +8,8 @@ export function ensureBlobs(event) {
   connectLambda(event);
 }
 
-function getStoreInstance() {
+function getStoreInstance(event) {
+  if (event) connectLambda(event);
   return getStore(STORE_NAME);
 }
 
@@ -48,8 +49,8 @@ async function saveDayStats(store, dateKey, stats) {
   await store.setJSON(`day/${dateKey}`, stats);
 }
 
-export async function recordVisit(countryCode, device, dateKey = todayKey()) {
-  const store = getStoreInstance();
+export async function recordVisit(countryCode, device, dateKey = todayKey(), event) {
+  const store = getStoreInstance(event);
   const stats = await loadDayStats(store, dateKey);
   const country = normalizeCountry(countryCode);
   const deviceType = normalizeDevice(device);
@@ -66,8 +67,8 @@ export async function recordVisit(countryCode, device, dateKey = todayKey()) {
   return { dateKey, country, total: stats._total };
 }
 
-export async function recordDuration(seconds, dateKey = todayKey()) {
-  const store = getStoreInstance();
+export async function recordDuration(seconds, dateKey = todayKey(), event) {
+  const store = getStoreInstance(event);
   const stats = await loadDayStats(store, dateKey);
   const duration = Math.min(Math.max(0, Math.round(Number(seconds) || 0)), MAX_DURATION_SECONDS);
 
@@ -83,8 +84,8 @@ export async function recordDuration(seconds, dateKey = todayKey()) {
   return { dateKey, recorded: true, seconds: duration };
 }
 
-export async function loadAllDayStats() {
-  const store = getStoreInstance();
+export async function loadAllDayStats(event) {
+  const store = getStoreInstance(event);
   const { blobs } = await store.list({ prefix: "day/" });
   const days = {};
 
@@ -210,7 +211,7 @@ export function aggregateStats(allDays, options = {}) {
   };
 }
 
-export async function getAggregatedStats() {
-  const allDays = await loadAllDayStats();
+export async function getAggregatedStats(event) {
+  const allDays = await loadAllDayStats(event);
   return aggregateStats(allDays);
 }
