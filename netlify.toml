@@ -63,7 +63,7 @@
 [[edge_functions]]
   path = "/*"
   function = "og-meta"
-  excludedPath = ["/admin", "/api/*"]
+  excludedPath = ["/admin", "/api/*", "/sitemap.xml", "/robots.txt"]
 
 [[headers]]
   for = "/admin"

@@ -2,7 +2,8 @@ const BOT_RE =
   /facebookexternalhit|Facebot|Twitterbot|WhatsApp|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|Googlebot|bingbot/i;
 
 const SKIP_PREFIXES = ["/assets/", "/api/", "/.netlify/", "/admin"];
-const SKIP_EXT = /\.(js|css|svg|png|jpg|jpeg|webp|ico|woff2?|map|json)$/i;
+const SKIP_PATHS = new Set(["/sitemap.xml", "/robots.txt", "/manifest.json", "/icon.svg"]);
+const SKIP_EXT = /\.(js|css|svg|png|jpg|jpeg|webp|ico|woff2?|map|json|xml|txt)$/i;
 
 export default async (request, context) => {
   try {
@@ -11,6 +12,7 @@ export default async (request, context) => {
     if (
       url.pathname === "/admin" ||
       url.pathname.startsWith("/admin/") ||
+      SKIP_PATHS.has(url.pathname) ||
       SKIP_PREFIXES.some((prefix) => url.pathname.startsWith(prefix)) ||
       SKIP_EXT.test(url.pathname)
     ) {
