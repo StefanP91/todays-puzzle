@@ -1,29 +1,15 @@
 import type { GameLangCode } from "./gameLanguage";
 import { getGameContent } from "./gameContent";
-
-const HTML_LANG: Record<GameLangCode, string> = {
-  mk: "mk",
-  en: "en",
-  sr: "sr",
-  hr: "hr",
-  bs: "bs",
-  sl: "sl",
-  sq: "sq",
-  bg: "bg",
-  el: "el",
-  ro: "ro",
-  de: "de",
-  fr: "fr",
-  es: "es",
-  it: "it",
-  pt: "pt",
-  nl: "nl",
-  pl: "pl",
-  cs: "cs",
-  sv: "sv",
-  hu: "hu",
-  uk: "uk",
-};
+import {
+  buildJsonLd,
+  DEFAULT_SEO_LANG,
+  getSiteOrigin,
+  htmlLangFor,
+  pageUrlForLang,
+  SEO_DESCRIPTION,
+  SEO_LANGS,
+  SEO_TITLE,
+} from "./seo";
 
 const OG_LOCALE: Record<GameLangCode, string> = {
   mk: "mk_MK",
@@ -47,30 +33,6 @@ const OG_LOCALE: Record<GameLangCode, string> = {
   sv: "sv_SE",
   hu: "hu_HU",
   uk: "uk_UA",
-};
-
-const DESCRIPTION: Record<GameLangCode, string> = {
-  mk: "Една македонска збор секој ден. Погоди ја за 6 обиди!",
-  en: "One five-letter word every day. Guess it in six tries!",
-  sr: "Једна српска реч дневно. Погоди је за 6 покушаја!",
-  hr: "Jedna hrvatska riječ dnevno. Pogodi je za 6 pokušaja!",
-  bs: "Jedna bosanska riječ dnevno. Pogodi je za 6 pokušaja!",
-  sl: "Ena slovenska beseda na dan. Ugani jo v 6 poskusih!",
-  sq: "Një fjalë shqipe në ditë. Gjeje me 6 prova!",
-  bg: "Една българска дума всеки ден. Отгадай я за 6 опита!",
-  el: "Μία ελληνική λέξη κάθε μέρα. Βρες τη σε 6 προσπάθειες!",
-  ro: "Un cuvânt românesc în fiecare zi. Ghicește-l în 6 încercări!",
-  de: "Ein deutsches Wort täglich. Errate es in 6 Versuchen!",
-  fr: "Un mot français chaque jour. Devine-le en 6 essais !",
-  es: "Una palabra española cada día. ¡Adivínala en 6 intentos!",
-  it: "Una parola italiana al giorno. Indovinala in 6 tentativi!",
-  pt: "Uma palavra portuguesa por dia. Adivinha em 6 tentativas!",
-  nl: "Eén Nederlands woord per dag. Raad het in 6 pogingen!",
-  pl: "Jedno polskie słowo dziennie. Zgadnij je w 6 próbach!",
-  cs: "Jedno české slovo denně. Uhodni ho v 6 pokusech!",
-  sv: "Ett svenskt ord varje dag. Gissa det på 6 försök!",
-  hu: "Egy magyar szó minden nap. Találd ki 6 próbálkozás alatt!",
-  uk: "Одне українське слово щодня. Вгадай його за 6 спроб!",
 };
 
 const SHORT_NAME: Record<GameLangCode, string> = {
@@ -102,6 +64,32 @@ function setMeta(selector: string, content: string): void {
   if (el) el.setAttribute("content", content);
 }
 
+function setOrCreateLink(rel: string, href: string, hreflang?: string): void {
+  const selector = hreflang
+    ? `link[rel="${rel}"][hreflang="${hreflang}"]`
+    : `link[rel="${rel}"]:not([hreflang])`;
+  let el = document.querySelector(selector) as HTMLLinkElement | null;
+  if (!el) {
+    el = document.createElement("link");
+    el.rel = rel;
+    if (hreflang) el.hreflang = hreflang;
+    document.head.appendChild(el);
+  }
+  el.href = href;
+}
+
+function setJsonLd(lang: GameLangCode, origin: string): void {
+  const id = "seo-json-ld";
+  let el = document.getElementById(id) as HTMLScriptElement | null;
+  if (!el) {
+    el = document.createElement("script");
+    el.id = id;
+    el.type = "application/ld+json";
+    document.head.appendChild(el);
+  }
+  el.textContent = JSON.stringify(buildJsonLd(lang, origin));
+}
+
 function syncLangInUrl(lang: GameLangCode): string {
   const url = new URL(window.location.href);
   url.searchParams.set("lang", lang);
@@ -109,17 +97,32 @@ function syncLangInUrl(lang: GameLangCode): string {
   return url.toString();
 }
 
+function syncHreflang(origin: string, activeLang: GameLangCode): void {
+  for (const lang of SEO_LANGS) {
+    setOrCreateLink("alternate", pageUrlForLang(origin, lang), lang);
+  }
+  setOrCreateLink("alternate", pageUrlForLang(origin, DEFAULT_SEO_LANG), "x-default");
+  void activeLang;
+}
+
 /** Sync document title and head meta tags with the active game language. */
 export function applyPageMeta(lang: GameLangCode): void {
-  const { title } = getGameContent(lang);
-  const description = DESCRIPTION[lang];
+  const { title: gameTitle } = getGameContent(lang);
+  const title = SEO_TITLE[lang] || gameTitle;
+  const description = SEO_DESCRIPTION[lang];
+  const origin = getSiteOrigin();
   const pageUrl = syncLangInUrl(lang);
-  const imageUrl = `${window.location.origin}/api/og.png?lang=${lang}`;
+  const imageUrl = `${origin}/api/og.png?lang=${lang}`;
 
   document.title = title;
-  document.documentElement.lang = HTML_LANG[lang];
+  document.documentElement.lang = htmlLangFor(lang);
+
+  setOrCreateLink("canonical", pageUrl);
+  syncHreflang(origin, lang);
+  setJsonLd(lang, origin);
 
   setMeta('meta[name="description"]', description);
+  setMeta('meta[name="robots"]', "index, follow");
   setMeta('meta[property="og:title"]', title);
   setMeta('meta[property="og:description"]', description);
   setMeta('meta[property="og:url"]', pageUrl);
@@ -135,4 +138,9 @@ export function applyPageMeta(lang: GameLangCode): void {
   setMeta('meta[name="twitter:description"]', description);
   setMeta('meta[name="twitter:image"]', imageUrl);
   setMeta('meta[name="apple-mobile-web-app-title"]', SHORT_NAME[lang]);
+}
+
+export function applyAdminNoIndex(): void {
+  document.title = "Admin — Today's Puzzle";
+  setMeta('meta[name="robots"]', "noindex, nofollow");
 }

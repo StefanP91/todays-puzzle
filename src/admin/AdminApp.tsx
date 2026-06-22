@@ -155,6 +155,16 @@ export default function AdminApp() {
 
   useEffect(() => {
     document.title = "Admin — Today's Puzzle";
+    const robots = document.querySelector('meta[name="robots"]');
+    if (robots) {
+      robots.setAttribute("content", "noindex, nofollow");
+    } else {
+      const meta = document.createElement("meta");
+      meta.name = "robots";
+      meta.content = "noindex, nofollow";
+      document.head.appendChild(meta);
+    }
+
     checkAdminSession()
       .then((ok) => setAuthenticated(ok))
       .catch(() => setAuthenticated(false));
