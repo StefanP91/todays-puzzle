@@ -1,5 +1,6 @@
-export interface CountryStat {
-  code: string;
+export interface CountrySourceStat {
+  country: string;
+  source: string;
   count: number;
 }
 
@@ -8,18 +9,12 @@ export interface DeviceStats {
   desktop: number;
 }
 
-export interface SourceStat {
-  key: string;
-  count: number;
-}
-
 export interface PeriodStats {
   total: number;
-  byCountry: CountryStat[];
+  byCountrySource: CountrySourceStat[];
   avgDurationSeconds: number | null;
   durationSessions: number;
   byDevice: DeviceStats;
-  bySource: SourceStat[];
 }
 
 export interface AdminStats {
@@ -145,6 +140,7 @@ const SOURCE_LABELS: Record<string, string> = {
   viber: "Viber",
   email: "Email",
   other: "Other websites",
+  unknown: "Unknown source",
 };
 
 export function sourceLabel(key: string): string {

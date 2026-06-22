@@ -10,9 +10,8 @@ import {
   formatMonthLabel,
   sourceLabel,
   type AdminStats,
-  type CountryStat,
+  type CountrySourceStat,
   type PeriodStats,
-  type SourceStat,
 } from "./adminApi";
 
 type Tab = "today" | "month" | "all";
@@ -22,7 +21,7 @@ function percent(count: number, total: number): string {
   return `${((count / total) * 100).toFixed(1)}%`;
 }
 
-function CountryTable({ rows, total }: { rows: CountryStat[]; total: number }) {
+function CountrySourceTable({ rows, total }: { rows: CountrySourceStat[]; total: number }) {
   if (!total) {
     return <p className="admin-empty">No visits recorded yet.</p>;
   }
@@ -33,36 +32,6 @@ function CountryTable({ rows, total }: { rows: CountryStat[]; total: number }) {
         <thead>
           <tr>
             <th>Country</th>
-            <th>Code</th>
-            <th>Visits</th>
-            <th>Share</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.code}>
-              <td>{countryLabel(row.code)}</td>
-              <td>{row.code}</td>
-              <td>{row.count.toLocaleString()}</td>
-              <td>{percent(row.count, total)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function SourceTable({ rows, total }: { rows: SourceStat[]; total: number }) {
-  if (!rows.length) {
-    return <p className="admin-empty">No traffic source data yet.</p>;
-  }
-
-  return (
-    <div className="admin-table-wrap">
-      <table className="admin-table">
-        <thead>
-          <tr>
             <th>Source</th>
             <th>Visits</th>
             <th>Share</th>
@@ -70,8 +39,9 @@ function SourceTable({ rows, total }: { rows: SourceStat[]; total: number }) {
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.key}>
-              <td>{sourceLabel(row.key)}</td>
+            <tr key={`${row.country}-${row.source}`}>
+              <td>{countryLabel(row.country)}</td>
+              <td>{sourceLabel(row.source)}</td>
               <td>{row.count.toLocaleString()}</td>
               <td>{percent(row.count, total)}</td>
             </tr>
@@ -265,11 +235,10 @@ export default function AdminApp() {
           title: `Today (${stats?.today.date ? formatDisplayDate(stats.today.date) : "—"})`,
           period: stats?.today ?? {
             total: 0,
-            byCountry: [],
+            byCountrySource: [],
             avgDurationSeconds: null,
             durationSessions: 0,
             byDevice: { mobile: 0, desktop: 0 },
-            bySource: [],
           },
         }
       : tab === "month"
@@ -277,22 +246,20 @@ export default function AdminApp() {
             title: formatMonthLabel(stats?.month.month ?? ""),
             period: stats?.month ?? {
               total: 0,
-              byCountry: [],
+              byCountrySource: [],
               avgDurationSeconds: null,
               durationSessions: 0,
               byDevice: { mobile: 0, desktop: 0 },
-              bySource: [],
             },
           }
         : {
             title: "All time",
             period: stats?.allTime ?? {
               total: 0,
-              byCountry: [],
+              byCountrySource: [],
               avgDurationSeconds: null,
               durationSessions: 0,
               byDevice: { mobile: 0, desktop: 0 },
-              bySource: [],
             },
           };
 
@@ -364,10 +331,8 @@ export default function AdminApp() {
           Total visits: <strong>{active.period.total.toLocaleString()}</strong>
         </p>
         <EngagementStats period={active.period} />
-        <h3 className="admin-section-title admin-section-title--sub">Traffic sources</h3>
-        <SourceTable rows={active.period.bySource} total={active.period.total} />
-        <h3 className="admin-section-title admin-section-title--sub">Countries</h3>
-        <CountryTable rows={active.period.byCountry} total={active.period.total} />
+        <h3 className="admin-section-title admin-section-title--sub">Countries &amp; sources</h3>
+        <CountrySourceTable rows={active.period.byCountrySource} total={active.period.total} />
       </section>
 
       {stats && <DailyChart series={stats.dailySeries} />}

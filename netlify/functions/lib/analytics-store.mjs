@@ -42,13 +42,17 @@ function emptyDuration() {
   return { sessions: 0, totalSeconds: 0 };
 }
 
-function emptySources() {
+function emptyMatrix() {
   return {};
 }
 
 function normalizeSource(source) {
   const key = String(source || "").trim().toLowerCase();
   return key || "direct";
+}
+
+function matrixKey(country, source) {
+  return `${country}|${source}`;
 }
 
 async function loadDayStats(store, dateKey) {
@@ -67,16 +71,15 @@ export async function recordVisit(countryCode, device, trafficInput, dateKey = t
   const deviceType = normalizeDevice(device);
   const source = normalizeSource(classifyTrafficSource(trafficInput));
 
-  stats[country] = (stats[country] || 0) + 1;
   stats._total = (stats._total || 0) + 1;
+  stats._matrix = stats._matrix || emptyMatrix();
+  const key = matrixKey(country, source);
+  stats._matrix[key] = (stats._matrix[key] || 0) + 1;
 
   if (deviceType) {
     stats._device = stats._device || emptyDevice();
     stats._device[deviceType] += 1;
   }
-
-  stats._sources = stats._sources || emptySources();
-  stats._sources[source] = (stats._sources[source] || 0) + 1;
 
   await saveDayStats(store, dateKey, stats);
   return { dateKey, country, source, total: stats._total };
@@ -114,10 +117,19 @@ export async function loadAllDayStats(event) {
   return days;
 }
 
-function mergeCountryMaps(target, source) {
-  for (const [code, count] of Object.entries(source)) {
-    if (code.startsWith("_")) continue;
-    target[code] = (target[code] || 0) + count;
+/** Merge day stats into a country|source matrix (supports legacy country-only rows). */
+function mergeMatrix(target, stats) {
+  if (stats._matrix && Object.keys(stats._matrix).length > 0) {
+    for (const [key, count] of Object.entries(stats._matrix)) {
+      target[key] = (target[key] || 0) + count;
+    }
+    return;
+  }
+
+  for (const [code, count] of Object.entries(stats)) {
+    if (code.startsWith("_") || !/^[A-Z]{2}$/.test(code)) continue;
+    const key = matrixKey(code, "unknown");
+    target[key] = (target[key] || 0) + count;
   }
 }
 
@@ -135,24 +147,13 @@ function mergeDuration(target, source) {
   target.totalSeconds += duration.totalSeconds || 0;
 }
 
-function mergeSources(target, source) {
-  const sources = source._sources;
-  if (!sources) return;
-  for (const [key, count] of Object.entries(sources)) {
-    target[key] = (target[key] || 0) + count;
-  }
-}
-
-function toSourceList(map) {
-  return Object.entries(map)
-    .map(([key, count]) => ({ key, count }))
-    .sort((a, b) => b.count - a.count);
-}
-
-function toCountryList(map) {
-  return Object.entries(map)
-    .map(([code, count]) => ({ code, count }))
-    .sort((a, b) => b.count - a.count);
+function toCountrySourceList(matrix) {
+  return Object.entries(matrix)
+    .map(([key, count]) => {
+      const [country, source = "unknown"] = key.split("|");
+      return { country, source, count };
+    })
+    .sort((a, b) => b.count - a.count || a.country.localeCompare(b.country));
 }
 
 function avgDurationSeconds(duration) {
@@ -160,14 +161,13 @@ function avgDurationSeconds(duration) {
   return Math.round(duration.totalSeconds / duration.sessions);
 }
 
-function periodStats(stats, countryMap, device, duration, sources) {
+function periodStats(stats, matrix, device, duration) {
   return {
     total: stats._total || 0,
-    byCountry: toCountryList(countryMap),
+    byCountrySource: toCountrySourceList(matrix),
     avgDurationSeconds: avgDurationSeconds(duration),
     durationSessions: duration.sessions,
     byDevice: { ...device },
-    bySource: toSourceList(sources),
   };
 }
 
@@ -176,14 +176,15 @@ export function aggregateStats(allDays, options = {}) {
   const month = today.slice(0, 7);
 
   const todayStats = allDays[today] || {};
-  const monthMap = {};
-  const allTimeMap = {};
+  const todayMatrix = emptyMatrix();
+  mergeMatrix(todayMatrix, todayStats);
+
+  const monthMatrix = emptyMatrix();
+  const allTimeMatrix = emptyMatrix();
   const monthDevice = emptyDevice();
   const allTimeDevice = emptyDevice();
   const monthDuration = emptyDuration();
   const allTimeDuration = emptyDuration();
-  const monthSources = emptySources();
-  const allTimeSources = emptySources();
   let monthTotal = 0;
   let allTimeTotal = 0;
   const dailySeries = [];
@@ -191,36 +192,29 @@ export function aggregateStats(allDays, options = {}) {
   for (const [dateKey, stats] of Object.entries(allDays)) {
     const total = stats._total || 0;
     allTimeTotal += total;
-    mergeCountryMaps(allTimeMap, stats);
+    mergeMatrix(allTimeMatrix, stats);
     mergeDevice(allTimeDevice, stats);
     mergeDuration(allTimeDuration, stats);
-    mergeSources(allTimeSources, stats);
     dailySeries.push({ date: dateKey, total });
 
     if (dateKey.startsWith(month)) {
       monthTotal += total;
-      mergeCountryMaps(monthMap, stats);
+      mergeMatrix(monthMatrix, stats);
       mergeDevice(monthDevice, stats);
       mergeDuration(monthDuration, stats);
-      mergeSources(monthSources, stats);
     }
   }
 
   dailySeries.sort((a, b) => a.date.localeCompare(b.date));
-
-  const todayCountryMap = Object.fromEntries(
-    Object.entries(todayStats).filter(([key]) => !key.startsWith("_"))
-  );
 
   return {
     today: {
       date: today,
       ...periodStats(
         todayStats,
-        todayCountryMap,
+        todayMatrix,
         todayStats._device || emptyDevice(),
-        todayStats._duration || emptyDuration(),
-        todayStats._sources || emptySources()
+        todayStats._duration || emptyDuration()
       ),
     },
     month: {
@@ -228,20 +222,18 @@ export function aggregateStats(allDays, options = {}) {
       total: monthTotal,
       ...periodStats(
         { _total: monthTotal },
-        monthMap,
+        monthMatrix,
         monthDevice,
-        monthDuration,
-        monthSources
+        monthDuration
       ),
     },
     allTime: {
       total: allTimeTotal,
       ...periodStats(
         { _total: allTimeTotal },
-        allTimeMap,
+        allTimeMatrix,
         allTimeDevice,
-        allTimeDuration,
-        allTimeSources
+        allTimeDuration
       ),
     },
     dailySeries: dailySeries.slice(-60),
