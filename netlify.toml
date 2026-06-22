@@ -13,6 +13,18 @@
   included_files = ["netlify/functions/lib/fonts/**"]
 
 [[redirects]]
+  from = "/share"
+  to = "/.netlify/functions/share"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/share.png"
+  to = "/.netlify/functions/share-og"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/sitemap.xml"
   to = "/.netlify/functions/sitemap"
   status = 200

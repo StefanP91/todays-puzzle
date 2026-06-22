@@ -6,8 +6,6 @@ import { getSharePageUrl, isLocalDev } from "./shareEncode";
 
 export const GAME_SITE_URL = "https://deneshnazagatka.mk";
 
-const FB_APP_ID = import.meta.env.VITE_FACEBOOK_APP_ID?.trim() ?? "";
-
 export function getShareUrl(): string {
   if (typeof window !== "undefined" && window.location.origin) {
     return window.location.origin;
@@ -153,43 +151,21 @@ export type FacebookShareResult =
     }
   | { method: "manual"; imageUrl: string };
 
-
-function stripTrailingUrl(text: string): string {
-  return text.replace(/\n\nhttps?:\/\/\S+\s*$/, "");
-}
-
-function openFacebookDialog(url: string): void {
-  const popup = window.open(
-    url,
-    "facebook-share",
-    "width=640,height=720,menubar=no,toolbar=no,status=no,scrollbars=yes,resizable=yes"
-  );
-  if (!popup) {
-    window.location.href = url;
-  }
-}
-
+/** Classic Facebook sharer — reliable link preview (dialog/share breaks previews). */
 function openFacebookComposer(sharePageUrl: string): void {
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-  if (FB_APP_ID) {
-    const params = new URLSearchParams({
-      app_id: FB_APP_ID,
-      display: "popup",
-      href: sharePageUrl,
-    });
-    openFacebookDialog(`https://www.facebook.com/dialog/share?${params.toString()}`);
-    return;
-  }
-
-  const params = new URLSearchParams({
-    display: "popup",
-    u: sharePageUrl,
-  });
   const base = isMobile
     ? "https://m.facebook.com/sharer/sharer.php"
     : "https://www.facebook.com/sharer/sharer.php";
-  openFacebookDialog(`${base}?${params.toString()}`);
+  const target = `${base}?u=${encodeURIComponent(sharePageUrl)}`;
+  const popup = window.open(
+    target,
+    "facebook-share",
+    "width=640,height=720,menubar=no,toolbar=no,status=no,scrollbars=yes,resizable=yes",
+  );
+  if (!popup) {
+    window.location.href = target;
+  }
 }
 
 async function tryNativeFacebookImageShare(
@@ -295,7 +271,7 @@ export async function shareToFacebook(options: {
       }
     }
 
-    const textCopied = await copyShareText(stripTrailingUrl(options.shareText));
+    const textCopied = await copyShareText(options.shareText);
     openFacebookComposer(sharePageUrl);
     return {
       method: "dialog",

@@ -2,7 +2,6 @@ User-agent: *
 Allow: /
 
 Disallow: /admin
-Allow: /api/share
 Disallow: /api/
 
 Sitemap: https://today-puzzle.netlify.app/api/sitemap.xml

@@ -43,7 +43,7 @@ export function getSharePageUrl(
   const site = getShareUrl() || GAME_SITE_URL;
   const payload = buildSharePayload(puzzleNumber, guesses, won, lang);
   const encoded = encodeShareParam(payload);
-  return `${site}/api/share?d=${encoded}`;
+  return `${site}/share?d=${encoded}`;
 }
 
 export function isLocalDev(): boolean {

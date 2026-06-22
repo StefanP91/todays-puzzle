@@ -16,7 +16,6 @@ const robots = `User-agent: *
 Allow: /
 
 Disallow: /admin
-Allow: /api/share
 Disallow: /api/
 
 Sitemap: ${SITE_URL}/api/sitemap.xml

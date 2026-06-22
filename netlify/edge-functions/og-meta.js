@@ -2,7 +2,7 @@ const BOT_RE =
   /facebookexternalhit|Facebot|meta-externalagent|Twitterbot|WhatsApp|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|Googlebot|bingbot/i;
 
 const SKIP_PREFIXES = ["/assets/", "/api/", "/.netlify/", "/admin"];
-const SKIP_PATHS = new Set(["/sitemap.xml", "/robots.txt", "/manifest.json", "/icon.svg"]);
+const SKIP_PATHS = new Set(["/sitemap.xml", "/robots.txt", "/manifest.json", "/icon.svg", "/share", "/share.png"]);
 const SKIP_EXT = /\.(js|css|svg|png|jpg|jpeg|webp|ico|woff2?|map|json|xml|txt)$/i;
 
 export default async (request, context) => {

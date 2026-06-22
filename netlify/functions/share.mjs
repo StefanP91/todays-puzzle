@@ -23,9 +23,9 @@ export async function handler(event) {
   }
 
   const origin = getSiteOrigin(event);
-  const sharePageUrl = `${origin}/api/share?d=${encodeURIComponent(encoded)}`;
+  const sharePageUrl = `${origin}/share?d=${encodeURIComponent(encoded)}`;
   const staticOgImage = ogImageUrl(origin, data.lang);
-  const resultImageUrl = `${origin}/api/share.png?d=${encodeURIComponent(encoded)}&v=7`;
+  const resultImageUrl = `${origin}/share.png?d=${encodeURIComponent(encoded)}&v=7`;
   const pageTitle = escapeHtmlAttr(getShareTitle(data));
   const ogTitle = escapeHtmlAttr(getShareOgTitle(data));
   const ogDescription = escapeHtmlAttr(getShareDescription(data));
