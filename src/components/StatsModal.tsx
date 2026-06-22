@@ -1,11 +1,13 @@
 import type { Stats } from "../lib/storage";
+import type { GameContent } from "../lib/gameContent";
 
 interface StatsModalProps {
   stats: Stats;
+  content: GameContent;
   onClose: () => void;
 }
 
-export default function StatsModal({ stats, onClose }: StatsModalProps) {
+export default function StatsModal({ stats, content, onClose }: StatsModalProps) {
   const winRate =
     stats.played > 0 ? Math.round((stats.won / stats.played) * 100) : 0;
   const maxDist = Math.max(...stats.distribution, 1);
@@ -19,14 +21,14 @@ export default function StatsModal({ stats, onClose }: StatsModalProps) {
         className="bg-panel rounded-2xl p-5 sm:p-6 w-full max-w-sm shadow-2xl border border-white/10 my-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-xl font-bold text-center mb-4">Статистика</h2>
+        <h2 className="text-xl font-bold text-center mb-4">{content.statsTitle}</h2>
 
         <div className="grid grid-cols-4 gap-2 text-center mb-6">
           {[
-            { label: "Игри", value: stats.played },
-            { label: "Победи %", value: winRate },
-            { label: "Серија", value: stats.currentStreak },
-            { label: "Макс.", value: stats.maxStreak },
+            { label: content.statsGames, value: stats.played },
+            { label: content.statsWinRate, value: winRate },
+            { label: content.statsStreak, value: stats.currentStreak },
+            { label: content.statsMax, value: stats.maxStreak },
           ].map((item) => (
             <div key={item.label}>
               <div className="text-2xl font-bold">{item.value}</div>
@@ -55,7 +57,7 @@ export default function StatsModal({ stats, onClose }: StatsModalProps) {
           onClick={onClose}
           className="w-full py-3 min-h-[44px] rounded-xl bg-accent font-bold hover:opacity-90 active:opacity-80 transition touch-manipulation"
         >
-          Затвори
+          {content.close}
         </button>
       </div>
     </div>

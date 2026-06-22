@@ -1,12 +1,22 @@
 import type { Cell, GameStatus } from "../types";
 import { getDailyWord, getPuzzleNumber, getTodayKey } from "./daily";
-import { getHintForWord } from "./dictionary";
+import { getHintForWord } from "./dictionaries";
+import type { GameLangCode } from "./gameLanguage";
 
-const STORAGE_KEY = "deneshna-zagatka-state";
-const STATS_KEY = "deneshna-zagatka-stats";
+const LEGACY_STORAGE_KEY = "deneshna-zagatka-state";
+const LEGACY_STATS_KEY = "deneshna-zagatka-stats";
+
+function storageKey(lang: GameLangCode): string {
+  return `todays-puzzle-state-${lang}`;
+}
+
+function statsKey(lang: GameLangCode): string {
+  return `todays-puzzle-stats-${lang}`;
+}
 
 export interface SavedGame {
   dateKey: string;
+  language: GameLangCode;
   guesses: Cell[][];
   currentGuess: string;
   status: GameStatus;
@@ -30,9 +40,16 @@ export function defaultStats(): Stats {
   };
 }
 
-export function loadStats(): Stats {
+export function loadStats(lang: GameLangCode): Stats {
   try {
-    const raw = localStorage.getItem(STATS_KEY);
+    let raw = localStorage.getItem(statsKey(lang));
+    if (!raw && lang === "mk") {
+      raw = localStorage.getItem(LEGACY_STATS_KEY);
+      if (raw) {
+        localStorage.setItem(statsKey(lang), raw);
+        localStorage.removeItem(LEGACY_STATS_KEY);
+      }
+    }
     if (!raw) return defaultStats();
     return { ...defaultStats(), ...JSON.parse(raw) };
   } catch {
@@ -40,13 +57,20 @@ export function loadStats(): Stats {
   }
 }
 
-export function saveStats(stats: Stats): void {
-  localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+export function saveStats(stats: Stats, lang: GameLangCode): void {
+  localStorage.setItem(statsKey(lang), JSON.stringify(stats));
 }
 
-export function loadGame(): SavedGame | null {
+export function loadGame(lang: GameLangCode): SavedGame | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    let raw = localStorage.getItem(storageKey(lang));
+    if (!raw && lang === "mk") {
+      raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+      if (raw) {
+        localStorage.setItem(storageKey(lang), raw);
+        localStorage.removeItem(LEGACY_STORAGE_KEY);
+      }
+    }
     if (!raw) return null;
     const game = JSON.parse(raw) as SavedGame;
     if (game.dateKey !== getTodayKey()) return null;
@@ -56,12 +80,16 @@ export function loadGame(): SavedGame | null {
   }
 }
 
-export function saveGame(game: SavedGame): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(game));
+export function saveGame(game: SavedGame, lang: GameLangCode): void {
+  localStorage.setItem(storageKey(lang), JSON.stringify({ ...game, language: lang }));
 }
 
-export function updateStatsOnComplete(won: boolean, guessCount: number): Stats {
-  const stats = loadStats();
+export function updateStatsOnComplete(
+  won: boolean,
+  guessCount: number,
+  lang: GameLangCode
+): Stats {
+  const stats = loadStats(lang);
   stats.played += 1;
 
   if (won) {
@@ -75,22 +103,24 @@ export function updateStatsOnComplete(won: boolean, guessCount: number): Stats {
     stats.currentStreak = 0;
   }
 
-  saveStats(stats);
+  saveStats(stats, lang);
   return stats;
 }
 
-export function createNewGame(): {
+export function createNewGame(lang: GameLangCode): {
   answer: string;
   puzzleNumber: number;
   dateKey: string;
   hint: string;
+  language: GameLangCode;
 } {
   const dateKey = getTodayKey();
-  const answer = getDailyWord(dateKey);
+  const answer = getDailyWord(dateKey, lang);
   return {
     answer,
     puzzleNumber: getPuzzleNumber(dateKey),
     dateKey,
-    hint: getHintForWord(answer),
+    hint: getHintForWord(answer, lang),
+    language: lang,
   };
 }

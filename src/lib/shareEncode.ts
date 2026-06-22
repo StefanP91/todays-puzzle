@@ -1,5 +1,6 @@
 import type { Cell } from "../types";
 import { MAX_GUESSES, WORD_LENGTH } from "../types";
+import type { GameLangCode } from "./gameLanguage";
 import { GAME_SITE_URL, getShareUrl } from "./share";
 
 const STATE_CHAR: Record<string, string> = {
@@ -13,7 +14,8 @@ const STATE_CHAR: Record<string, string> = {
 export function buildSharePayload(
   puzzleNumber: number,
   guesses: Cell[][],
-  won: boolean
+  won: boolean,
+  lang: GameLangCode
 ): string {
   const score = won ? String(guesses.length) : "x";
   let grid = "";
@@ -25,7 +27,7 @@ export function buildSharePayload(
     }
   }
 
-  return `${puzzleNumber}-${score}-${grid}`;
+  return `${puzzleNumber}-${score}-${grid}-${lang}`;
 }
 
 export function encodeShareParam(payload: string): string {
@@ -35,10 +37,11 @@ export function encodeShareParam(payload: string): string {
 export function getSharePageUrl(
   puzzleNumber: number,
   guesses: Cell[][],
-  won: boolean
+  won: boolean,
+  lang: GameLangCode
 ): string {
   const site = getShareUrl() || GAME_SITE_URL;
-  const payload = buildSharePayload(puzzleNumber, guesses, won);
+  const payload = buildSharePayload(puzzleNumber, guesses, won, lang);
   const encoded = encodeShareParam(payload);
   return `${site}/api/share?d=${encoded}`;
 }

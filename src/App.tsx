@@ -9,14 +9,20 @@ import ResultModal from "./components/ResultModal";
 import StatsModal from "./components/StatsModal";
 import TrainingBanner from "./components/TrainingBanner";
 import { buildShareText, evaluateGuess, isValidWord, mergeKeyboardState } from "./lib/game";
+import { getKeyboardRows } from "./lib/gameConfig";
+import { getGameContent } from "./lib/gameContent";
+import {
+  langFromUrl,
+  hasSavedGameLanguage,
+  isGameLangCode,
+  loadGameLanguage,
+  resolveGameLanguage,
+  saveGameLanguage,
+  type GameLangCode,
+} from "./lib/gameLanguage";
 import type { GameLanguage } from "./lib/languages";
 import { getSharePageUrl } from "./lib/shareEncode";
-import {
-  getSiteContent,
-  loadSiteLocale,
-  saveSiteLocale,
-  type SiteLocale,
-} from "./lib/siteContent";
+import { getSiteContent } from "./lib/siteContent";
 import {
   createNewGame,
   loadGame,
@@ -26,10 +32,10 @@ import {
   type Stats,
 } from "./lib/storage";
 import { pickRandomTrainingWord } from "./lib/training";
+import { applyPageMeta } from "./lib/pageMeta";
+import { normalizeKey, normalizeWord } from "./lib/words";
 import type { Cell, GameStatus, LetterState } from "./types";
-import { KEYBOARD_ROWS, MAX_GUESSES, WORD_LENGTH } from "./types";
-
-const ALL_KEYS = new Set(KEYBOARD_ROWS.flat());
+import { MAX_GUESSES, WORD_LENGTH } from "./types";
 
 type GameMode = "daily" | "training";
 
@@ -44,13 +50,25 @@ function emptyBoard() {
   };
 }
 
+function keyboardFromGuesses(guesses: Cell[][]): Record<string, LetterState> {
+  let kb: Record<string, LetterState> = {};
+  for (const row of guesses) {
+    kb = mergeKeyboardState(kb, row);
+  }
+  return kb;
+}
+
 export default function App() {
+  const initialLang = langFromUrl() ?? loadGameLanguage();
+  const initialMeta = createNewGame(initialLang);
+
+  const [ready, setReady] = useState(() => hasSavedGameLanguage());
+  const [gameLang, setGameLang] = useState<GameLangCode>(initialLang);
   const [mode, setMode] = useState<GameMode>("daily");
-  const [dailyMeta] = useState(createNewGame);
-  const [answer, setAnswer] = useState(dailyMeta.answer);
-  const [hint, setHint] = useState(dailyMeta.hint);
-  const [puzzleNumber] = useState(dailyMeta.puzzleNumber);
-  const [dateKey] = useState(dailyMeta.dateKey);
+  const [answer, setAnswer] = useState(initialMeta.answer);
+  const [hint, setHint] = useState(initialMeta.hint);
+  const [puzzleNumber] = useState(initialMeta.puzzleNumber);
+  const [dateKey] = useState(initialMeta.dateKey);
 
   const [guesses, setGuesses] = useState<Cell[][]>([]);
   const [currentGuess, setCurrentGuess] = useState("");
@@ -60,21 +78,19 @@ export default function App() {
   const [message, setMessage] = useState("");
   const [showStats, setShowStats] = useState(false);
   const [showResult, setShowResult] = useState(false);
-  const [stats, setStats] = useState<Stats>(loadStats);
+  const [stats, setStats] = useState<Stats>(() => loadStats(initialLang));
   const [statsUpdated, setStatsUpdated] = useState(false);
   const [trainingRound, setTrainingRound] = useState(1);
-  const [siteLocale, setSiteLocale] = useState<SiteLocale>(loadSiteLocale);
   const gameRef = useRef<HTMLDivElement>(null);
 
-  const siteContent = useMemo(() => getSiteContent(siteLocale), [siteLocale]);
+  const gameContent = useMemo(() => getGameContent(gameLang), [gameLang]);
+  const siteContent = useMemo(() => getSiteContent(gameLang), [gameLang]);
+  const keyboardRows = useMemo(() => getKeyboardRows(gameLang), [gameLang]);
+  const allKeys = useMemo(() => new Set(keyboardRows.flat()), [keyboardRows]);
 
-  const toggleSiteLocale = useCallback(() => {
-    setSiteLocale((prev) => {
-      const next = prev === "en" ? "mk" : "en";
-      saveSiteLocale(next);
-      return next;
-    });
-  }, []);
+  useEffect(() => {
+    applyPageMeta(gameLang);
+  }, [gameLang]);
 
   const resetBoard = useCallback(() => {
     const blank = emptyBoard();
@@ -86,15 +102,46 @@ export default function App() {
     setShowResult(blank.showResult);
   }, []);
 
+  const applySavedGame = useCallback(
+    (saved: ReturnType<typeof loadGame>) => {
+      if (saved) {
+        setGuesses(saved.guesses);
+        setCurrentGuess(saved.currentGuess);
+        setStatus(saved.status);
+        setKeyStates(keyboardFromGuesses(saved.guesses));
+        setStatsUpdated(saved.status !== "playing");
+        setShowResult(saved.status !== "playing");
+      } else {
+        resetBoard();
+      }
+    },
+    [resetBoard]
+  );
+
+  const switchGameLanguage = useCallback(
+    (code: GameLangCode) => {
+      saveGameLanguage(code);
+      setGameLang(code);
+      setMode("daily");
+
+      const meta = createNewGame(code);
+      setAnswer(meta.answer);
+      setHint(meta.hint);
+      setStats(loadStats(code));
+      applySavedGame(loadGame(code));
+    },
+    [applySavedGame]
+  );
+
   const startTrainingRound = useCallback(
     (exclude?: string, round = 1) => {
-      const { word, hint: wordHint } = pickRandomTrainingWord(exclude);
+      const { word, hint: wordHint } = pickRandomTrainingWord(gameLang, exclude);
       setAnswer(word);
       setHint(wordHint);
       setTrainingRound(round);
       resetBoard();
     },
-    [resetBoard]
+    [gameLang, resetBoard]
   );
 
   const enterTraining = useCallback(() => {
@@ -104,47 +151,50 @@ export default function App() {
 
   const exitTraining = useCallback(() => {
     setMode("daily");
-    setAnswer(dailyMeta.answer);
-    setHint(dailyMeta.hint);
-    const saved = loadGame();
-    if (saved) {
-      setGuesses(saved.guesses);
-      setCurrentGuess(saved.currentGuess);
-      setStatus(saved.status);
-      let kb: Record<string, LetterState> = {};
-      for (const row of saved.guesses) {
-        kb = mergeKeyboardState(kb, row);
-      }
-      setKeyStates(kb);
-      setStatsUpdated(saved.status !== "playing");
-    } else {
-      resetBoard();
-    }
+    const meta = createNewGame(gameLang);
+    setAnswer(meta.answer);
+    setHint(meta.hint);
+    applySavedGame(loadGame(gameLang));
     setShowResult(false);
-  }, [dailyMeta.answer, dailyMeta.hint, resetBoard]);
+  }, [gameLang, applySavedGame]);
 
   useEffect(() => {
-    const saved = loadGame();
-    if (saved) {
-      setGuesses(saved.guesses);
-      setCurrentGuess(saved.currentGuess);
-      setStatus(saved.status);
-      let kb: Record<string, LetterState> = {};
-      for (const row of saved.guesses) {
-        kb = mergeKeyboardState(kb, row);
-      }
-      setKeyStates(kb);
-      if (saved.status !== "playing") {
-        setStatsUpdated(true);
-      }
+    const fromUrl = langFromUrl();
+    if (fromUrl) {
+      saveGameLanguage(fromUrl);
+      applySavedGame(loadGame(fromUrl));
+      setReady(true);
+      return;
     }
-  }, []);
+
+    if (hasSavedGameLanguage()) {
+      applySavedGame(loadGame(initialLang));
+      return;
+    }
+
+    let cancelled = false;
+
+    resolveGameLanguage().then((lang) => {
+      if (cancelled) return;
+
+      const meta = createNewGame(lang);
+      setGameLang(lang);
+      setAnswer(meta.answer);
+      setHint(meta.hint);
+      setStats(loadStats(lang));
+      applySavedGame(loadGame(lang));
+      setReady(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [applySavedGame, initialLang]);
 
   useEffect(() => {
-    if (mode === "daily") {
-      saveGame({ dateKey, guesses, currentGuess, status });
-    }
-  }, [mode, dateKey, guesses, currentGuess, status]);
+    if (!ready || mode !== "daily") return;
+    saveGame({ dateKey, guesses, currentGuess, status, language: gameLang }, gameLang);
+  }, [ready, mode, dateKey, guesses, currentGuess, status, gameLang]);
 
   const currentRow = guesses.length;
 
@@ -154,9 +204,11 @@ export default function App() {
         puzzleNumber,
         guesses,
         status === "won",
-        getSharePageUrl(puzzleNumber, guesses, status === "won")
+        getSharePageUrl(puzzleNumber, guesses, status === "won", gameLang),
+        gameContent,
+        gameLang
       ),
-    [puzzleNumber, guesses, status]
+    [puzzleNumber, guesses, status, gameContent, gameLang]
   );
 
   const showToast = useCallback((text: string, duration = 2000) => {
@@ -166,13 +218,19 @@ export default function App() {
 
   const handleLanguageSelect = useCallback(
     (lang: GameLanguage) => {
-      if (lang.available) {
-        gameRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (!lang.available) {
+        showToast(siteContent.comingSoon, 2500);
         return;
       }
-      showToast(siteContent.comingSoon, 2500);
+      if (isGameLangCode(lang.code) && lang.available) {
+        const code = lang.code;
+        if (code !== gameLang) {
+          switchGameLanguage(code);
+        }
+      }
+      gameRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     },
-    [siteContent.comingSoon, showToast]
+    [gameLang, siteContent.comingSoon, showToast, switchGameLanguage]
   );
 
   const scrollToLanguages = useCallback(() => {
@@ -183,8 +241,8 @@ export default function App() {
   }, []);
 
   const showHintClue = useCallback(() => {
-    showToast(`Навод: ${hint}`, 5000);
-  }, [hint, showToast]);
+    showToast(`${gameContent.hintPrefix}: ${hint}`, 5000);
+  }, [hint, gameContent.hintPrefix, showToast]);
 
   const submitGuess = useCallback(() => {
     if (status !== "playing") return;
@@ -192,29 +250,29 @@ export default function App() {
     if (currentGuess.length !== WORD_LENGTH) {
       setShake(true);
       setTimeout(() => setShake(false), 500);
-      showToast("Недоволно букви");
+      showToast(gameContent.notEnoughLetters);
       return;
     }
 
-    if (!isValidWord(currentGuess)) {
+    if (!isValidWord(currentGuess, gameLang)) {
       setShake(true);
       setTimeout(() => setShake(false), 500);
-      showToast("Непознат збор");
+      showToast(gameContent.unknownWord);
       return;
     }
 
-    const evaluated = evaluateGuess(currentGuess, answer);
+    const evaluated = evaluateGuess(currentGuess, answer, gameLang);
     const newGuesses = [...guesses, evaluated];
     setGuesses(newGuesses);
     setKeyStates((prev) => mergeKeyboardState(prev, evaluated));
     setCurrentGuess("");
 
-    if (currentGuess.toUpperCase() === answer.toUpperCase()) {
+    if (normalizeWord(currentGuess, gameLang) === normalizeWord(answer, gameLang)) {
       setStatus("won");
       if (mode === "daily") {
         setShowResult(true);
         if (!statsUpdated) {
-          setStats(updateStatsOnComplete(true, newGuesses.length));
+          setStats(updateStatsOnComplete(true, newGuesses.length, gameLang));
           setStatsUpdated(true);
         }
       }
@@ -226,7 +284,7 @@ export default function App() {
       if (mode === "daily") {
         setShowResult(true);
         if (!statsUpdated) {
-          setStats(updateStatsOnComplete(false, 0));
+          setStats(updateStatsOnComplete(false, 0, gameLang));
           setStatsUpdated(true);
         }
       }
@@ -239,6 +297,9 @@ export default function App() {
     showToast,
     statsUpdated,
     mode,
+    gameLang,
+    gameContent.notEnoughLetters,
+    gameContent.unknownWord,
   ]);
 
   const handleKey = useCallback(
@@ -255,20 +316,20 @@ export default function App() {
         return;
       }
 
-      if (!ALL_KEYS.has(key as (typeof KEYBOARD_ROWS)[number][number])) return;
+      if (!allKeys.has(key)) return;
 
       if (currentGuess.length < WORD_LENGTH) {
         setCurrentGuess((g) => g + key);
       }
     },
-    [status, currentGuess, submitGuess]
+    [status, currentGuess, submitGuess, allKeys]
   );
 
   useEffect(() => {
     function onPhysicalKey(e: KeyboardEvent) {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
 
-      const key = e.key.toUpperCase();
+      const key = normalizeKey(e.key, gameLang);
 
       if (e.key === "Enter") {
         e.preventDefault();
@@ -282,7 +343,7 @@ export default function App() {
         return;
       }
 
-      if (key.length === 1 && ALL_KEYS.has(key as (typeof KEYBOARD_ROWS)[number][number])) {
+      if (key.length === 1 && allKeys.has(key)) {
         e.preventDefault();
         handleKey(key);
       }
@@ -290,15 +351,30 @@ export default function App() {
 
     window.addEventListener("keydown", onPhysicalKey);
     return () => window.removeEventListener("keydown", onPhysicalKey);
-  }, [handleKey]);
+  }, [handleKey, allKeys]);
 
   const isDaily = mode === "daily";
   const isTraining = mode === "training";
 
+  if (!ready) {
+    return (
+      <div className="app-page min-h-screen flex items-center justify-center">
+        <div
+          className="h-8 w-8 rounded-full border-2 border-white/20 border-t-white/80 animate-spin"
+          aria-label="Loading"
+        />
+      </div>
+    );
+  }
+
   return (
     <>
       {showStats && (
-        <StatsModal stats={stats} onClose={() => setShowStats(false)} />
+        <StatsModal
+          stats={stats}
+          content={gameContent}
+          onClose={() => setShowStats(false)}
+        />
       )}
 
       {showResult && isDaily && (
@@ -309,6 +385,8 @@ export default function App() {
           guessCount={guesses.length}
           guesses={guesses}
           shareText={shareText}
+          content={gameContent}
+          lang={gameLang}
           onClose={() => setShowResult(false)}
         />
       )}
@@ -326,136 +404,128 @@ export default function App() {
 
         {status === "playing" && isDaily && (
           <div className="game-hint game-info-box game-info-box--outside">
-            <p className="game-info-title">Како се игра</p>
-            <p className="game-info-text">
-              Со <strong>клик на тастатурата</strong> внеси{" "}
-              <strong>5 букви</strong>, па кликни на{" "}
-              <strong className="enter-symbol">⏎</strong>. Имаш{" "}
-              <strong>6 обиди</strong>. Една загатка дневно.
-            </p>
+            <p className="game-info-title">{gameContent.howToPlayTitle}</p>
+            <p className="game-info-text">{gameContent.howToPlayText}</p>
             <p className="game-info-colors">
-              <span>🟩 точна буква</span>
-              <span>🟨 погрешно место</span>
-              <span>⬛ не постои</span>
+              <span>{gameContent.howToPlayColors.correct}</span>
+              <span>{gameContent.howToPlayColors.present}</span>
+              <span>{gameContent.howToPlayColors.absent}</span>
             </p>
-            <p className="game-info-tip">
-              Притисни <strong>💡</strong> за навод поврзан со зборот.
-            </p>
+            <p className="game-info-tip">{gameContent.howToPlayTip}</p>
             <button
               type="button"
               onClick={enterTraining}
               className="mt-3 w-full text-sm font-bold py-2.5 rounded-lg bg-white/10 hover:bg-white/15 active:bg-white/20 transition touch-manipulation"
             >
-              🏋️ Тренинг — неограничени загатки
+              {gameContent.trainingButton}
             </button>
           </div>
         )}
 
         {status === "playing" && isTraining && (
           <div className="game-hint game-info-box game-info-box--training game-info-box--outside">
-            <p className="game-info-title">Тренинг режим</p>
-            <p className="game-info-text">
-              Случаен збор — играј колку сакаш. Не се брои во дневната
-              статистика и не може да се сподели.
-            </p>
+            <p className="game-info-title">{gameContent.trainingModeTitle}</p>
+            <p className="game-info-text">{gameContent.trainingModeText}</p>
             <button
               type="button"
               onClick={exitTraining}
               className="mt-2 w-full text-sm font-bold py-2.5 rounded-lg bg-white/10 hover:bg-white/15 active:bg-white/20 transition touch-manipulation"
             >
-              ← Назад на дневна загатка
+              {gameContent.backToDaily}
             </button>
           </div>
         )}
 
         <div className="app-shell" id="game" ref={gameRef}>
-      <header className="app-header flex items-center justify-between border-b border-white/10 shrink-0">
-        <button
-          type="button"
-          onClick={() => setShowStats(true)}
-          className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-white/10 active:bg-white/15 transition text-lg touch-manipulation"
-          aria-label="Статистика"
-        >
-          📊
-        </button>
-        <div className="text-center px-1 min-w-0">
-          <h1 className="text-base xs:text-lg md:text-xl font-bold tracking-wide">
-            {isTraining ? "Тренинг" : "Денешна Загатка"}
-          </h1>
-          <p className="text-xs md:text-sm text-gray-400 mt-0.5">
-            {isTraining ? `Рунда #${trainingRound}` : `#${puzzleNumber}`}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={showHintClue}
-          className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-white/10 active:bg-white/15 transition text-lg touch-manipulation"
-          aria-label="Навод за зборот"
-        >
-          💡
-        </button>
-      </header>
+          <header className="app-header flex items-center justify-between border-b border-white/10 shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowStats(true)}
+              className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-white/10 active:bg-white/15 transition text-lg touch-manipulation"
+              aria-label={gameContent.statsAria}
+            >
+              📊
+            </button>
+            <div className="text-center px-1 min-w-0">
+              <h1 className="text-base xs:text-lg md:text-xl font-bold tracking-wide">
+                {isTraining ? gameContent.trainingTitle : gameContent.title}
+              </h1>
+              <p className="text-xs md:text-sm text-gray-400 mt-0.5">
+                {isTraining
+                  ? `${gameContent.roundLabel} #${trainingRound}`
+                  : `#${puzzleNumber}`}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={showHintClue}
+              className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-white/10 active:bg-white/15 transition text-lg touch-manipulation"
+              aria-label={gameContent.hintAria}
+            >
+              💡
+            </button>
+          </header>
 
-      <main className="game-main">
-        {message && (
-          <div className="fixed toast-safe left-1/2 -translate-x-1/2 z-40 bg-white text-black px-4 py-2 rounded-lg font-bold text-sm shadow-lg max-w-[90vw] text-center">
-            {message}
-          </div>
-        )}
+          <main className="game-main">
+            {message && (
+              <div className="fixed toast-safe left-1/2 -translate-x-1/2 z-40 bg-white text-black px-4 py-2 rounded-lg font-bold text-sm shadow-lg max-w-[90vw] text-center">
+                {message}
+              </div>
+            )}
 
-        <div className="game-board-wrap">
-          <Board
-            guesses={guesses}
-            currentGuess={currentGuess}
-            currentRow={currentRow}
-            shake={shake}
-          />
-        </div>
+            <div className="game-board-wrap">
+              <Board
+                guesses={guesses}
+                currentGuess={currentGuess}
+                currentRow={currentRow}
+                shake={shake}
+              />
+            </div>
 
-        {status !== "playing" && isDaily && (
-          <CompletedBanner
-            won={status === "won"}
-            answer={answer}
-            guessCount={guesses.length}
-            puzzleNumber={puzzleNumber}
-            guesses={guesses}
-            shareText={shareText}
-          />
-        )}
+            {status !== "playing" && isDaily && (
+              <CompletedBanner
+                won={status === "won"}
+                answer={answer}
+                guessCount={guesses.length}
+                puzzleNumber={puzzleNumber}
+                guesses={guesses}
+                shareText={shareText}
+                content={gameContent}
+                lang={gameLang}
+              />
+            )}
 
-        {status !== "playing" && isTraining && (
-          <TrainingBanner
-            won={status === "won"}
-            answer={answer}
-            guessCount={guesses.length}
-            round={trainingRound}
-            onNext={() => startTrainingRound(answer, trainingRound + 1)}
-            onExit={exitTraining}
-          />
-        )}
+            {status !== "playing" && isTraining && (
+              <TrainingBanner
+                won={status === "won"}
+                answer={answer}
+                guessCount={guesses.length}
+                round={trainingRound}
+                content={gameContent}
+                onNext={() => startTrainingRound(answer, trainingRound + 1)}
+                onExit={exitTraining}
+              />
+            )}
 
-        <div className="game-keyboard-wrap">
-          <Keyboard
-            onKey={handleKey}
-            keyStates={keyStates}
-            disabled={status !== "playing"}
-          />
-        </div>
-      </main>
+            <div className="game-keyboard-wrap">
+              <Keyboard
+                rows={keyboardRows}
+                onKey={handleKey}
+                keyStates={keyStates}
+                disabled={status !== "playing"}
+                enterLabel={gameContent.keyboardEnter}
+                backspaceLabel={gameContent.keyboardBackspace}
+              />
+            </div>
+          </main>
         </div>
 
         <div className="landing-footer">
-          <div className="landing-toolbar">
-            <button
-              type="button"
-              className="landing-locale-btn"
-              onClick={toggleSiteLocale}
-              aria-label="Toggle site language"
-            >
-              {siteContent.localeToggle}
-            </button>
-          </div>
-          <LanguageSection content={siteContent} onSelect={handleLanguageSelect} />
+          <LanguageSection
+            content={siteContent}
+            activeCode={gameLang}
+            onSelect={handleLanguageSelect}
+          />
           <BestTipsSection content={siteContent} />
           <FaqSection content={siteContent} />
         </div>

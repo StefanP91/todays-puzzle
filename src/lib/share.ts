@@ -1,5 +1,7 @@
 import type { Cell } from "../types";
+import type { GameContent } from "./gameContent";
 import { generateShareImage, blobToObjectUrl } from "./shareImage";
+import type { GameLangCode } from "./gameLanguage";
 import { buildSharePayload, encodeShareParam, isLocalDev } from "./shareEncode";
 
 export const GAME_SITE_URL = "https://deneshnazagatka.mk";
@@ -72,6 +74,7 @@ export async function nativeShareWithImage(options: {
   guesses: Cell[][];
   won: boolean;
   url: string;
+  content: GameContent;
 }): Promise<boolean> {
   if (!navigator.share) return false;
 
@@ -80,12 +83,13 @@ export async function nativeShareWithImage(options: {
       puzzleNumber: options.puzzleNumber,
       guesses: options.guesses,
       won: options.won,
+      content: options.content,
     });
-    const file = new File([blob], "deneshna-zagatka.png", { type: "image/png" });
+    const file = new File([blob], "todays-puzzle.png", { type: "image/png" });
     const shareData: ShareData = {
       files: [file],
       text: options.shareText,
-      title: "Денешна Загатка",
+      title: options.content.shareGameTitle,
       url: options.url,
     };
 
@@ -172,14 +176,17 @@ function openFacebookComposer(sharePageUrl: string, imageUrl: string): void {
   openFacebookDialog(`${base}?${params.toString()}`);
 }
 
-async function tryNativeFacebookImageShare(blob: Blob): Promise<boolean> {
+async function tryNativeFacebookImageShare(
+  blob: Blob,
+  title: string
+): Promise<boolean> {
   if (!navigator.share) return false;
 
   try {
     const file = new File([blob], "todays-puzzle.png", { type: "image/png" });
     const shareData: ShareData = {
       files: [file],
-      title: "Денешна Загатка",
+      title,
     };
 
     if (!navigator.canShare?.(shareData)) return false;
@@ -198,14 +205,16 @@ export async function shareToInstagram(options: {
   puzzleNumber: number;
   guesses: Cell[][];
   won: boolean;
+  content: GameContent;
 }): Promise<"native" | "download"> {
   const blob = await generateShareImage({
     puzzleNumber: options.puzzleNumber,
     guesses: options.guesses,
     won: options.won,
+    content: options.content,
   });
-  const file = new File([blob], "deneshna-zagatka.png", { type: "image/png" });
-  const shareData: ShareData = { files: [file], title: "Денешна Загатка" };
+  const file = new File([blob], "todays-puzzle.png", { type: "image/png" });
+  const shareData: ShareData = { files: [file], title: options.content.shareGameTitle };
 
   if (navigator.share) {
     try {
@@ -223,7 +232,7 @@ export async function shareToInstagram(options: {
   const imageUrl = blobToObjectUrl(blob);
   const link = document.createElement("a");
   link.href = imageUrl;
-  link.download = "deneshna-zagatka.png";
+  link.download = "todays-puzzle.png";
   link.click();
   setTimeout(() => URL.revokeObjectURL(imageUrl), 1000);
 
@@ -242,16 +251,19 @@ export async function shareToFacebook(options: {
   puzzleNumber: number;
   guesses: Cell[][];
   won: boolean;
+  content: GameContent;
+  lang: GameLangCode;
 }): Promise<FacebookShareResult> {
   const site = getShareUrl();
   const payload = buildSharePayload(
     options.puzzleNumber,
     options.guesses,
-    options.won
+    options.won,
+    options.lang
   );
   const encoded = encodeShareParam(payload);
   const sharePageUrl = `${site}/api/share?d=${encoded}`;
-  const imageUrl = `${site}/api/share.png?d=${encoded}&v=5`;
+  const imageUrl = `${site}/api/share.png?d=${encoded}&v=6`;
 
   if (!isLocalDev()) {
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -260,8 +272,12 @@ export async function shareToFacebook(options: {
         puzzleNumber: options.puzzleNumber,
         guesses: options.guesses,
         won: options.won,
+        content: options.content,
       });
-      const shared = await tryNativeFacebookImageShare(blob);
+      const shared = await tryNativeFacebookImageShare(
+        blob,
+        options.content.shareGameTitle
+      );
       if (shared) {
         return { method: "dialog", imageCopied: true, textCopied: false, imageUrl: "" };
       }
@@ -275,6 +291,7 @@ export async function shareToFacebook(options: {
     puzzleNumber: options.puzzleNumber,
     guesses: options.guesses,
     won: options.won,
+    content: options.content,
   });
   const localImageUrl = blobToObjectUrl(blob);
   return { method: "manual", imageUrl: localImageUrl };

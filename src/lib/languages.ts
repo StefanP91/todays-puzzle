@@ -5,32 +5,33 @@ export interface GameLanguage {
   name: string;
   nativeName: string;
   flag: string;
+  countryCode: string;
   region: LanguageRegion;
   available: boolean;
 }
 
 export const GAME_LANGUAGES: GameLanguage[] = [
-  { code: "en", name: "English", nativeName: "English", flag: "🇬🇧", region: "primary", available: false },
-  { code: "mk", name: "Macedonian", nativeName: "Македонски", flag: "🇲🇰", region: "balkan", available: true },
-  { code: "sr", name: "Serbian", nativeName: "Српски", flag: "🇷🇸", region: "balkan", available: false },
-  { code: "hr", name: "Croatian", nativeName: "Hrvatski", flag: "🇭🇷", region: "balkan", available: false },
-  { code: "bs", name: "Bosnian", nativeName: "Bosanski", flag: "🇧🇦", region: "balkan", available: false },
-  { code: "sl", name: "Slovenian", nativeName: "Slovenščina", flag: "🇸🇮", region: "balkan", available: false },
-  { code: "sq", name: "Albanian", nativeName: "Shqip", flag: "🇦🇱", region: "balkan", available: false },
-  { code: "bg", name: "Bulgarian", nativeName: "Български", flag: "🇧🇬", region: "balkan", available: false },
-  { code: "el", name: "Greek", nativeName: "Ελληνικά", flag: "🇬🇷", region: "balkan", available: false },
-  { code: "ro", name: "Romanian", nativeName: "Română", flag: "🇷🇴", region: "balkan", available: false },
-  { code: "de", name: "German", nativeName: "Deutsch", flag: "🇩🇪", region: "european", available: false },
-  { code: "fr", name: "French", nativeName: "Français", flag: "🇫🇷", region: "european", available: false },
-  { code: "es", name: "Spanish", nativeName: "Español", flag: "🇪🇸", region: "european", available: false },
-  { code: "it", name: "Italian", nativeName: "Italiano", flag: "🇮🇹", region: "european", available: false },
-  { code: "pt", name: "Portuguese", nativeName: "Português", flag: "🇵🇹", region: "european", available: false },
-  { code: "nl", name: "Dutch", nativeName: "Nederlands", flag: "🇳🇱", region: "european", available: false },
-  { code: "pl", name: "Polish", nativeName: "Polski", flag: "🇵🇱", region: "european", available: false },
-  { code: "cs", name: "Czech", nativeName: "Čeština", flag: "🇨🇿", region: "european", available: false },
-  { code: "sv", name: "Swedish", nativeName: "Svenska", flag: "🇸🇪", region: "european", available: false },
-  { code: "hu", name: "Hungarian", nativeName: "Magyar", flag: "🇭🇺", region: "european", available: false },
-  { code: "uk", name: "Ukrainian", nativeName: "Українська", flag: "🇺🇦", region: "european", available: false },
+  { code: "en", name: "English", nativeName: "English", flag: "🇬🇧", countryCode: "gb", region: "primary", available: true },
+  { code: "mk", name: "Macedonian", nativeName: "Македонски", flag: "🇲🇰", countryCode: "mk", region: "balkan", available: true },
+  { code: "sr", name: "Serbian", nativeName: "Српски", flag: "🇷🇸", countryCode: "rs", region: "balkan", available: true },
+  { code: "hr", name: "Croatian", nativeName: "Hrvatski", flag: "🇭🇷", countryCode: "hr", region: "balkan", available: true },
+  { code: "bs", name: "Bosnian", nativeName: "Bosanski", flag: "🇧🇦", countryCode: "ba", region: "balkan", available: true },
+  { code: "sl", name: "Slovenian", nativeName: "Slovenščina", flag: "🇸🇮", countryCode: "si", region: "balkan", available: true },
+  { code: "sq", name: "Albanian", nativeName: "Shqip", flag: "🇦🇱", countryCode: "al", region: "balkan", available: true },
+  { code: "bg", name: "Bulgarian", nativeName: "Български", flag: "🇧🇬", countryCode: "bg", region: "balkan", available: true },
+  { code: "el", name: "Greek", nativeName: "Ελληνικά", flag: "🇬🇷", countryCode: "gr", region: "balkan", available: true },
+  { code: "ro", name: "Romanian", nativeName: "Română", flag: "🇷🇴", countryCode: "ro", region: "balkan", available: true },
+  { code: "de", name: "German", nativeName: "Deutsch", flag: "🇩🇪", countryCode: "de", region: "european", available: true },
+  { code: "fr", name: "French", nativeName: "Français", flag: "🇫🇷", countryCode: "fr", region: "european", available: true },
+  { code: "es", name: "Spanish", nativeName: "Español", flag: "🇪🇸", countryCode: "es", region: "european", available: true },
+  { code: "it", name: "Italian", nativeName: "Italiano", flag: "🇮🇹", countryCode: "it", region: "european", available: true },
+  { code: "pt", name: "Portuguese", nativeName: "Português", flag: "🇵🇹", countryCode: "pt", region: "european", available: true },
+  { code: "nl", name: "Dutch", nativeName: "Nederlands", flag: "🇳🇱", countryCode: "nl", region: "european", available: true },
+  { code: "pl", name: "Polish", nativeName: "Polski", flag: "🇵🇱", countryCode: "pl", region: "european", available: true },
+  { code: "cs", name: "Czech", nativeName: "Čeština", flag: "🇨🇿", countryCode: "cz", region: "european", available: true },
+  { code: "sv", name: "Swedish", nativeName: "Svenska", flag: "🇸🇪", countryCode: "se", region: "european", available: true },
+  { code: "hu", name: "Hungarian", nativeName: "Magyar", flag: "🇭🇺", countryCode: "hu", region: "european", available: true },
+  { code: "uk", name: "Ukrainian", nativeName: "Українська", flag: "🇺🇦", countryCode: "ua", region: "european", available: true },
 ];
 
 export const LANGUAGES_BY_REGION: Record<LanguageRegion, GameLanguage[]> = {

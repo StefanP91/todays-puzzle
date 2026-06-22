@@ -1,4 +1,5 @@
-import { ANSWER_WORDS } from "./words";
+import type { GameLangCode } from "./gameLanguage";
+import { getAnswerWords } from "./words";
 
 const EPOCH = new Date("2025-01-01T00:00:00+01:00");
 
@@ -29,9 +30,10 @@ function hashString(str: string): number {
   return hash;
 }
 
-export function getDailyWord(dateKey = getTodayKey()): string {
+export function getDailyWord(dateKey = getTodayKey(), lang: GameLangCode = "mk"): string {
+  const pool = getAnswerWords(lang);
   const puzzle = getPuzzleNumber(dateKey);
-  const index = hashString(dateKey) % ANSWER_WORDS.length;
-  const rotated = (index + puzzle * 7) % ANSWER_WORDS.length;
-  return ANSWER_WORDS[rotated];
+  const index = hashString(dateKey) % pool.length;
+  const rotated = (index + puzzle * 7) % pool.length;
+  return pool[rotated];
 }

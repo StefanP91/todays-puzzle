@@ -4,31 +4,46 @@ import type { SiteContent } from "../lib/siteContent";
 
 interface LanguageSectionProps {
   content: SiteContent;
+  activeCode: string;
   onSelect: (lang: GameLanguage) => void;
 }
 
 function LanguageCard({
   lang,
   content,
+  activeCode,
   onSelect,
 }: {
   lang: GameLanguage;
   content: SiteContent;
+  activeCode: string;
   onSelect: (lang: GameLanguage) => void;
 }) {
+  const isSelected = lang.code === activeCode;
   return (
     <button
       type="button"
       onClick={() => onSelect(lang)}
-      className={`landing-lang-card ${lang.available ? "landing-lang-card--active" : ""}`}
+      className={`landing-lang-card ${lang.available ? "landing-lang-card--active" : ""} ${
+        isSelected ? "landing-lang-card--selected" : ""
+      }`}
     >
-      <span className="landing-lang-flag" aria-hidden>
-        {lang.flag}
-      </span>
-      <span className="landing-lang-names">
-        <span className="landing-lang-native">{lang.nativeName}</span>
-        <span className="landing-lang-en">{lang.name}</span>
-      </span>
+      <div className="landing-lang-head">
+        <img
+          className="landing-lang-flag"
+          src={`https://flagcdn.com/w40/${lang.countryCode}.png`}
+          srcSet={`https://flagcdn.com/w80/${lang.countryCode}.png 2x`}
+          alt=""
+          width={32}
+          height={24}
+          loading="lazy"
+          decoding="async"
+        />
+        <span className="landing-lang-names">
+          <span className="landing-lang-native">{lang.nativeName}</span>
+          <span className="landing-lang-en">{lang.name}</span>
+        </span>
+      </div>
       <span
         className={`landing-lang-badge ${lang.available ? "landing-lang-badge--live" : ""}`}
       >
@@ -42,11 +57,13 @@ function LanguageGroup({
   title,
   languages,
   content,
+  activeCode,
   onSelect,
 }: {
   title: string;
   languages: GameLanguage[];
   content: SiteContent;
+  activeCode: string;
   onSelect: (lang: GameLanguage) => void;
 }) {
   return (
@@ -54,14 +71,24 @@ function LanguageGroup({
       <h3 className="landing-lang-group-title">{title}</h3>
       <div className="landing-lang-grid">
         {languages.map((lang) => (
-          <LanguageCard key={lang.code} lang={lang} content={content} onSelect={onSelect} />
+          <LanguageCard
+            key={lang.code}
+            lang={lang}
+            content={content}
+            activeCode={activeCode}
+            onSelect={onSelect}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-export default function LanguageSection({ content, onSelect }: LanguageSectionProps) {
+export default function LanguageSection({
+  content,
+  activeCode,
+  onSelect,
+}: LanguageSectionProps) {
   return (
     <section className="landing-section" id="languages">
       <h2 className="landing-section-title">{content.selectLanguage}</h2>
@@ -69,18 +96,21 @@ export default function LanguageSection({ content, onSelect }: LanguageSectionPr
         title={content.primaryLanguages}
         languages={LANGUAGES_BY_REGION.primary}
         content={content}
+        activeCode={activeCode}
         onSelect={onSelect}
       />
       <LanguageGroup
         title={content.balkanLanguages}
         languages={LANGUAGES_BY_REGION.balkan}
         content={content}
+        activeCode={activeCode}
         onSelect={onSelect}
       />
       <LanguageGroup
         title={content.europeanLanguages}
         languages={LANGUAGES_BY_REGION.european}
         content={content}
+        activeCode={activeCode}
         onSelect={onSelect}
       />
     </section>

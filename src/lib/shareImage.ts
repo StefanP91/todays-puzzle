@@ -1,6 +1,7 @@
 import type { Cell, LetterState } from "../types";
 import { MAX_GUESSES, WORD_LENGTH } from "../types";
 import { buildShareImageCaption } from "./game";
+import type { GameContent } from "./gameContent";
 import { getShareUrl } from "./share";
 
 const SHARE_WIDTH = 1200;
@@ -35,8 +36,9 @@ export async function generateShareImage(options: {
   puzzleNumber: number;
   guesses: Cell[][];
   won: boolean;
+  content: GameContent;
 }): Promise<Blob> {
-  const { puzzleNumber, guesses, won } = options;
+  const { puzzleNumber, guesses, won, content } = options;
   const width = SHARE_WIDTH;
   const height = SHARE_HEIGHT;
   const centerX = width / 2;
@@ -64,7 +66,7 @@ export async function generateShareImage(options: {
   ctx.textAlign = "center";
   ctx.fillStyle = "#ffffff";
   ctx.font = 'bold 38px "Segoe UI", system-ui, sans-serif';
-  ctx.fillText("Денешна Загатка", centerX, 68);
+  ctx.fillText(content.shareGameTitle, centerX, 68);
 
   const score = won ? `${guesses.length}/6` : "X/6";
   ctx.fillStyle = "#9ca3af";
@@ -95,7 +97,8 @@ export async function generateShareImage(options: {
     puzzleNumber,
     won,
     guesses.length,
-    site
+    site,
+    content
   );
   const displayLink = link.replace(/^https?:\/\//, "");
   const footerY = gridY + gridH + 48;

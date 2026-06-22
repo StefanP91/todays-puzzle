@@ -1,4 +1,6 @@
 import type { Cell } from "../types";
+import type { GameContent } from "../lib/gameContent";
+import type { GameLangCode } from "../lib/gameLanguage";
 import SharePanel from "./SharePanel";
 
 interface ResultModalProps {
@@ -8,6 +10,8 @@ interface ResultModalProps {
   guessCount: number;
   guesses: Cell[][];
   shareText: string;
+  content: GameContent;
+  lang: GameLangCode;
   onClose: () => void;
 }
 
@@ -18,6 +22,8 @@ export default function ResultModal({
   guessCount,
   guesses,
   shareText,
+  content,
+  lang,
   onClose,
 }: ResultModalProps) {
   return (
@@ -31,16 +37,16 @@ export default function ResultModal({
       >
         <div className="text-4xl mb-2">{won ? "🎉" : "😔"}</div>
         <h2 className="text-xl font-bold mb-1">
-          {won ? "Браво!" : "Утре повторно!"}
+          {won ? content.resultWon : content.resultLost}
         </h2>
         <p className="text-gray-400 text-sm mb-4">
-          Загатка #{puzzleNumber}
+          {content.puzzleLabel} #{puzzleNumber}
           {won && ` · ${guessCount}/6`}
         </p>
 
         {!won && (
           <p className="mb-4">
-            Зборот беше:{" "}
+            {content.wordWas}{" "}
             <span className="font-bold text-accent text-lg">{answer}</span>
           </p>
         )}
@@ -51,6 +57,8 @@ export default function ResultModal({
             puzzleNumber={puzzleNumber}
             guesses={guesses}
             won={won}
+            content={content}
+            lang={lang}
           />
         </div>
 
@@ -59,7 +67,7 @@ export default function ResultModal({
           onClick={onClose}
           className="w-full py-3 min-h-[44px] rounded-xl bg-white/10 font-bold hover:bg-white/15 active:bg-white/20 transition touch-manipulation"
         >
-          Затвори
+          {content.close}
         </button>
       </div>
     </div>

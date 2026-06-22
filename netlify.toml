@@ -7,6 +7,12 @@
   included_files = ["netlify/functions/lib/fonts/**"]
 
 [[redirects]]
+  from = "/api/geo"
+  to = "/.netlify/functions/geo"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/share"
   to = "/.netlify/functions/share"
   status = 200
@@ -17,6 +23,16 @@
   to = "/.netlify/functions/share-og"
   status = 200
   force = true
+
+[[redirects]]
+  from = "/api/og.png"
+  to = "/.netlify/functions/home-og-image"
+  status = 200
+  force = true
+
+[[edge_functions]]
+  path = "/*"
+  function = "og-meta"
 
 [[redirects]]
   from = "/*"

@@ -1,8 +1,39 @@
-import { DICTIONARY_5 } from "./dictionary";
+import { getDictionary } from "./dictionaries";
+import type { GameLangCode } from "./gameLanguage";
 
-/** Зборови за дневни одговори — само речнички лексеми (5 букви) */
-export const ANSWER_WORDS = DICTIONARY_5.map((e) => e.word);
+export function normalizeWord(word: string, lang: GameLangCode): string {
+  const locale: Partial<Record<GameLangCode, string>> = {
+    hr: "hr-HR",
+    bs: "bs-BA",
+    sl: "sl-SI",
+    sq: "sq-AL",
+    bg: "bg-BG",
+    el: "el-GR",
+    ro: "ro-RO",
+    de: "de-DE",
+    fr: "fr-FR",
+    es: "es-ES",
+    it: "it-IT",
+    pt: "pt-PT",
+    nl: "nl-NL",
+    pl: "pl-PL",
+    cs: "cs-CZ",
+    sv: "sv-SE",
+    hu: "hu-HU",
+    uk: "uk-UA",
+  };
+  if (locale[lang]) return word.toLocaleUpperCase(locale[lang]!);
+  return word.toUpperCase();
+}
 
-export const VALID_WORDS = [...ANSWER_WORDS];
+export function normalizeKey(key: string, lang: GameLangCode): string {
+  return normalizeWord(key, lang);
+}
 
-export const WORD_SET = new Set(VALID_WORDS.map((w) => w.toUpperCase()));
+export function getAnswerWords(lang: GameLangCode): string[] {
+  return getDictionary(lang).map((e) => e.word);
+}
+
+export function getWordSet(lang: GameLangCode): Set<string> {
+  return new Set(getAnswerWords(lang).map((w) => normalizeWord(w, lang)));
+}

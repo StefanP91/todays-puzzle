@@ -1,5 +1,7 @@
 import { useState } from "react";
 import type { Cell } from "../types";
+import type { GameContent } from "../lib/gameContent";
+import type { GameLangCode } from "../lib/gameLanguage";
 import FacebookShareGuide from "./FacebookShareGuide";
 import {
   canNativeShare,
@@ -20,6 +22,8 @@ interface SharePanelProps {
   puzzleNumber: number;
   guesses: Cell[][];
   won: boolean;
+  content: GameContent;
+  lang: GameLangCode;
   compact?: boolean;
 }
 
@@ -82,6 +86,8 @@ export default function SharePanel({
   puzzleNumber,
   guesses,
   won,
+  content,
+  lang,
   compact = false,
 }: SharePanelProps) {
   const [copied, setCopied] = useState(false);
@@ -107,15 +113,17 @@ export default function SharePanel({
             puzzleNumber,
             guesses,
             won,
+            content,
+            lang,
           });
           if (result.method === "dialog") {
-            setFacebookToast("Сликата е веќе во постот — кликни Сподели");
+            setFacebookToast(content.facebookImageReady);
             setTimeout(() => setFacebookToast(""), 7000);
           } else if (result.method === "clipboard") {
             setFacebookToast(
               result.imageCopied
-                ? "Сликата е копирана — залепи ја (Ctrl+V) на Facebook"
-                : "Текстот е копиран — залепи го на Facebook"
+                ? content.facebookCopied
+                : content.facebookTextCopied
             );
             setTimeout(() => setFacebookToast(""), 6000);
           } else {
@@ -127,11 +135,11 @@ export default function SharePanel({
         break;
       }
       case "instagram": {
-        const result = await shareToInstagram({ puzzleNumber, guesses, won });
+        const result = await shareToInstagram({ puzzleNumber, guesses, won, content });
         setInstagramToast(
           result === "native"
-            ? "Избери Instagram за Story или порака"
-            : "Сликата е преземена — додај ја на Instagram"
+            ? content.instagramNative
+            : content.instagramDownload
         );
         setTimeout(() => setInstagramToast(""), 7000);
         break;
@@ -160,6 +168,7 @@ export default function SharePanel({
       guesses,
       won,
       url: shareUrl,
+      content,
     });
     if (!shared) {
       await handleCopy();
@@ -169,7 +178,7 @@ export default function SharePanel({
   return (
     <div className={compact ? "space-y-2" : "space-y-3"}>
       <p className={`text-gray-400 ${compact ? "text-xs" : "text-sm"}`}>
-        Сподели на социјални мрежи
+        {content.shareHeading}
       </p>
 
       <div className="flex flex-wrap justify-center gap-2">
@@ -178,7 +187,7 @@ export default function SharePanel({
             key={btn.id}
             type="button"
             title={btn.label}
-            aria-label={`Сподели на ${btn.label}`}
+            aria-label={`${content.shareOn} ${btn.label}`}
             disabled={btn.id === "facebook" && facebookLoading}
             onClick={() => handleSocial(btn.id)}
             className={`${btn.className} w-11 h-11 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-white transition active:scale-95 touch-manipulation disabled:opacity-60`}
@@ -192,8 +201,8 @@ export default function SharePanel({
         ))}
         <button
           type="button"
-          title="Копирај"
-          aria-label="Копирај резултат"
+          title={content.copy}
+          aria-label={content.copyResult}
           onClick={handleCopy}
           className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center bg-white/15 hover:bg-white/25 text-white transition active:scale-95 touch-manipulation"
         >
@@ -231,7 +240,7 @@ export default function SharePanel({
             compact ? "py-2 min-h-[40px] text-sm" : "py-3 min-h-[44px]"
           }`}
         >
-          Сподели (телефон)
+          {content.shareNative}
         </button>
       )}
     </div>

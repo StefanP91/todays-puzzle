@@ -1,14 +1,17 @@
 import type { Cell, LetterState } from "../types";
 import { WORD_LENGTH } from "../types";
-import { WORD_SET } from "./words";
+import type { GameContent } from "./gameContent";
+import type { GameLangCode } from "./gameLanguage";
+import { getGameConfig } from "./gameConfig";
+import { getWordSet, normalizeWord } from "./words";
 
-export function isValidWord(word: string): boolean {
-  return WORD_SET.has(word.toUpperCase());
+export function isValidWord(word: string, lang: GameLangCode): boolean {
+  return getWordSet(lang).has(normalizeWord(word, lang));
 }
 
-export function evaluateGuess(guess: string, answer: string): Cell[] {
-  const g = guess.toUpperCase();
-  const a = answer.toUpperCase();
+export function evaluateGuess(guess: string, answer: string, lang: GameLangCode): Cell[] {
+  const g = normalizeWord(guess, lang);
+  const a = normalizeWord(answer, lang);
   const result: LetterState[] = Array(WORD_LENGTH).fill("absent");
   const answerCounts = new Map<string, number>();
 
@@ -65,13 +68,15 @@ export function buildFacebookQuote(
   puzzleNumber: number,
   won: boolean,
   guessCount: number,
-  siteUrl: string
+  siteUrl: string,
+  content: GameContent
 ): string {
   const { headline, link } = buildShareImageCaption(
     puzzleNumber,
     won,
     guessCount,
-    siteUrl
+    siteUrl,
+    content
   );
   return `${headline} ${link}`;
 }
@@ -80,18 +85,19 @@ export function buildShareImageCaption(
   puzzleNumber: number,
   won: boolean,
   guessCount: number,
-  siteUrl: string
+  siteUrl: string,
+  content: GameContent
 ): { headline: string; link: string } {
   const link = siteUrl.startsWith("http") ? siteUrl : `https://${siteUrl}`;
   if (won) {
-    const attempts = guessCount === 1 ? "1 обид" : `${guessCount} обиди`;
-    return {
-      headline: `Погодив во ${attempts}! Пробај и ти:`,
-      link,
-    };
+    const headline =
+      guessCount === 1
+        ? content.shareWonOne
+        : content.shareWonMany.replace("{n}", String(guessCount));
+    return { headline, link };
   }
   return {
-    headline: `Не ја погодив загатка #${puzzleNumber}. Пробај и ти:`,
+    headline: content.shareLost.replace("{n}", String(puzzleNumber)),
     link,
   };
 }
@@ -100,7 +106,9 @@ export function buildShareText(
   puzzleNumber: number,
   guesses: Cell[][],
   won: boolean,
-  siteUrl = "deneshnazagatka.mk"
+  siteUrl: string,
+  content: GameContent,
+  lang: GameLangCode
 ): string {
   const emojiMap: Record<LetterState, string> = {
     correct: "🟩",
@@ -115,6 +123,8 @@ export function buildShareText(
     .join("\n");
 
   const score = won ? `${guesses.length}/6` : "X/6";
+  const label = content.shareGameTitle;
+  const fallbackUrl = getGameConfig(lang).shareSiteLabel;
 
-  return `Денешна Загатка #${puzzleNumber} ${score}\n\n${rows}\n\n${siteUrl}`;
+  return `${label} #${puzzleNumber} ${score}\n\n${rows}\n\n${siteUrl || fallbackUrl}`;
 }

@@ -1,7 +1,9 @@
-const PAYLOAD_RE = /^(\d{1,5})-([x\d])-([0123]{30})$/;
+import { DEFAULT_LANG, VALID_LANGS, getShareContent } from "./share-content.mjs";
+
+const PAYLOAD_RE = /^(\d{1,5})-([x\d])-([0123]{30})(?:-([a-z]{2}))?$/;
 
 export function decodeShareParam(encoded) {
-  if (!encoded || encoded.length > 80) return null;
+  if (!encoded || encoded.length > 84) return null;
 
   try {
     const base64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
@@ -12,44 +14,56 @@ export function decodeShareParam(encoded) {
     const puzzleNumber = Number(match[1]);
     const score = match[2];
     const grid = match[3];
+    const langRaw = match[4] ?? DEFAULT_LANG;
+    const lang = VALID_LANGS.has(langRaw) ? langRaw : DEFAULT_LANG;
 
     if (!Number.isFinite(puzzleNumber) || puzzleNumber < 1) return null;
 
-    return { puzzleNumber, score, grid };
+    return { puzzleNumber, score, grid, lang };
   } catch {
     return null;
   }
 }
 
+function fillPuzzle(template, puzzle) {
+  return template.replace(/\{puzzle\}/g, String(puzzle)).replace(/#\{n\}/g, `#${puzzle}`);
+}
+
 export function getShareTitle(data) {
+  const c = getShareContent(data.lang);
   const scoreLabel = data.score === "x" ? "X/6" : `${data.score}/6`;
-  return `Денешна Загатка #${data.puzzleNumber} — ${scoreLabel}`;
+  return `${c.gameTitle} #${data.puzzleNumber} — ${scoreLabel}`;
 }
 
 export function getShareDescription(data) {
+  const c = getShareContent(data.lang);
   const puzzle = data.puzzleNumber;
+
   if (data.score === "x") {
-    return `Не ја погодив денешната загатка #${puzzle} за 6 обиди. Пробај и ти!`;
+    return fillPuzzle(c.descLost, puzzle);
   }
+
   const n = Number(data.score);
-  const attempts = n === 1 ? "1 обид" : `${n} обиди`;
-  return `Погодив во ${attempts}! Пробај и ти на Денешна Загатка #${puzzle}.`;
+  const template = n === 1 ? c.descWonOne : c.descWonMany;
+  return fillPuzzle(template, puzzle).replace(/\{n\}/g, String(n));
 }
 
 export function getShareImageCaption(data, origin) {
+  const c = getShareContent(data.lang);
   const link = origin.startsWith("http") ? origin : `https://${origin}`;
+  const puzzle = data.puzzleNumber;
+
   if (data.score === "x") {
     return {
-      headline: `Не ја погодив загатка #${data.puzzleNumber}. Пробај и ти:`,
+      headline: fillPuzzle(c.lost, puzzle),
       link,
+      gameTitle: c.gameTitle,
     };
   }
+
   const n = Number(data.score);
-  const attempts = n === 1 ? "1 обид" : `${n} обиди`;
-  return {
-    headline: `Погодив во ${attempts}! Пробај и ти:`,
-    link,
-  };
+  const headline = n === 1 ? c.wonOne : c.wonMany.replace(/\{n\}/g, String(n));
+  return { headline, link, gameTitle: c.gameTitle };
 }
 
 export function getSiteOrigin(event) {
