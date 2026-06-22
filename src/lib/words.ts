@@ -34,6 +34,13 @@ export function getAnswerWords(lang: GameLangCode): string[] {
   return getDictionary(lang).map((e) => e.word);
 }
 
+const wordSetCache = new Map<GameLangCode, Set<string>>();
+
 export function getWordSet(lang: GameLangCode): Set<string> {
-  return new Set(getAnswerWords(lang).map((w) => normalizeWord(w, lang)));
+  let set = wordSetCache.get(lang);
+  if (!set) {
+    set = new Set(getAnswerWords(lang).map((w) => normalizeWord(w, lang)));
+    wordSetCache.set(lang, set);
+  }
+  return set;
 }

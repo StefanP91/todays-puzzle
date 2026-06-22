@@ -3,6 +3,8 @@ import type { GameLangCode } from "./gameLanguage";
 /** Fallback when country is unknown or not mapped to a playable language. */
 export const DEFAULT_GEO_LANG: GameLangCode = "en";
 
+const GEO_TIMEOUT_MS = 2500;
+
 /** ISO 3166-1 alpha-2 → playable game language. */
 const COUNTRY_TO_LANG: Record<string, GameLangCode> = {
   mk: "mk",
@@ -82,24 +84,27 @@ export function languageFromCountry(countryCode: string | null | undefined): Gam
   return COUNTRY_TO_LANG[countryCode.toLowerCase()] ?? DEFAULT_GEO_LANG;
 }
 
+function fetchWithTimeout(url: string, ms: number): Promise<Response> {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), ms);
+  return fetch(url, { signal: controller.signal }).finally(() => window.clearTimeout(timer));
+}
+
 async function fetchCountryFromNetlify(): Promise<string | null> {
-  const res = await fetch("/api/geo", { signal: AbortSignal.timeout(4000) });
+  const res = await fetchWithTimeout("/api/geo", GEO_TIMEOUT_MS);
   if (!res.ok) return null;
   const data = (await res.json()) as { country?: string | null };
   return data.country ?? null;
 }
 
 async function fetchCountryFromIpApi(): Promise<string | null> {
-  const res = await fetch("https://ipapi.co/country_code/", {
-    signal: AbortSignal.timeout(4000),
-  });
+  const res = await fetchWithTimeout("https://ipapi.co/country_code/", GEO_TIMEOUT_MS);
   if (!res.ok) return null;
   const text = (await res.text()).trim();
   return text.length === 2 ? text : null;
 }
 
-/** Resolve language from visitor IP; falls back to English. */
-export async function detectLanguageFromIp(): Promise<GameLangCode> {
+async function detectLanguageFromIpInner(): Promise<GameLangCode> {
   for (const fetchCountry of [fetchCountryFromNetlify, fetchCountryFromIpApi]) {
     try {
       const country = await fetchCountry();
@@ -109,4 +114,14 @@ export async function detectLanguageFromIp(): Promise<GameLangCode> {
     }
   }
   return DEFAULT_GEO_LANG;
+}
+
+/** Resolve language from visitor IP; always resolves within a few seconds. */
+export function detectLanguageFromIp(): Promise<GameLangCode> {
+  return Promise.race([
+    detectLanguageFromIpInner(),
+    new Promise<GameLangCode>((resolve) => {
+      window.setTimeout(() => resolve(DEFAULT_GEO_LANG), GEO_TIMEOUT_MS + 500);
+    }),
+  ]);
 }

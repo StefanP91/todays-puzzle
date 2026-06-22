@@ -11,6 +11,8 @@ import TrainingBanner from "./components/TrainingBanner";
 import { buildShareText, evaluateGuess, isValidWord, mergeKeyboardState } from "./lib/game";
 import { getKeyboardRows } from "./lib/gameConfig";
 import { getGameContent } from "./lib/gameContent";
+import { getTodayKey, getPuzzleNumber } from "./lib/daily";
+import { ensureDictionary } from "./lib/dictionaries";
 import {
   langFromUrl,
   hasSavedGameLanguage,
@@ -61,15 +63,14 @@ function keyboardFromGuesses(guesses: Cell[][]): Record<string, LetterState> {
 
 export default function App() {
   const initialLang = langFromUrl() ?? loadGameLanguage();
-  const initialMeta = createNewGame(initialLang);
 
-  const [ready, setReady] = useState(() => hasSavedGameLanguage());
+  const [dictReady, setDictReady] = useState(false);
   const [gameLang, setGameLang] = useState<GameLangCode>(initialLang);
   const [mode, setMode] = useState<GameMode>("daily");
-  const [answer, setAnswer] = useState(initialMeta.answer);
-  const [hint, setHint] = useState(initialMeta.hint);
-  const [puzzleNumber] = useState(initialMeta.puzzleNumber);
-  const [dateKey] = useState(initialMeta.dateKey);
+  const [answer, setAnswer] = useState("");
+  const [hint, setHint] = useState("");
+  const [puzzleNumber, setPuzzleNumber] = useState(() => getPuzzleNumber());
+  const [dateKey, setDateKey] = useState(() => getTodayKey());
 
   const [guesses, setGuesses] = useState<Cell[][]>([]);
   const [currentGuess, setCurrentGuess] = useState("");
@@ -123,19 +124,26 @@ export default function App() {
     [resetBoard]
   );
 
+  const applyGameMeta = useCallback((meta: ReturnType<typeof createNewGame>) => {
+    setAnswer(meta.answer);
+    setHint(meta.hint);
+    setPuzzleNumber(meta.puzzleNumber);
+    setDateKey(meta.dateKey);
+  }, []);
+
   const switchGameLanguage = useCallback(
-    (code: GameLangCode) => {
+    async (code: GameLangCode) => {
+      await ensureDictionary(code);
       saveGameLanguage(code);
       setGameLang(code);
       setMode("daily");
 
       const meta = createNewGame(code);
-      setAnswer(meta.answer);
-      setHint(meta.hint);
+      applyGameMeta(meta);
       setStats(loadStats(code));
       applySavedGame(loadGame(code));
     },
-    [applySavedGame]
+    [applySavedGame, applyGameMeta]
   );
 
   const startTrainingRound = useCallback(
@@ -157,49 +165,51 @@ export default function App() {
   const exitTraining = useCallback(() => {
     setMode("daily");
     const meta = createNewGame(gameLang);
-    setAnswer(meta.answer);
-    setHint(meta.hint);
+    applyGameMeta(meta);
     applySavedGame(loadGame(gameLang));
     setShowResult(false);
-  }, [gameLang, applySavedGame]);
+  }, [gameLang, applySavedGame, applyGameMeta]);
 
   useEffect(() => {
-    const fromUrl = langFromUrl();
-    if (fromUrl) {
-      saveGameLanguage(fromUrl);
-      applySavedGame(loadGame(fromUrl));
-      setReady(true);
-      return;
-    }
-
-    if (hasSavedGameLanguage()) {
-      applySavedGame(loadGame(initialLang));
-      return;
-    }
-
     let cancelled = false;
 
-    resolveGameLanguage().then((lang) => {
-      if (cancelled) return;
+    async function init() {
+      try {
+        const fromUrl = langFromUrl();
+        const lang = fromUrl ?? loadGameLanguage();
+        if (fromUrl) saveGameLanguage(fromUrl);
 
-      const meta = createNewGame(lang);
-      setGameLang(lang);
-      setAnswer(meta.answer);
-      setHint(meta.hint);
-      setStats(loadStats(lang));
-      applySavedGame(loadGame(lang));
-      setReady(true);
-    });
+        await ensureDictionary(lang);
+        if (cancelled) return;
+
+        applyGameMeta(createNewGame(lang));
+        setGameLang(lang);
+        setStats(loadStats(lang));
+        applySavedGame(loadGame(lang));
+        setDictReady(true);
+
+        if (!fromUrl && !hasSavedGameLanguage()) {
+          const detected = await resolveGameLanguage();
+          if (!cancelled && detected !== lang) {
+            await switchGameLanguage(detected);
+          }
+        }
+      } catch {
+        if (!cancelled) setDictReady(true);
+      }
+    }
+
+    void init();
 
     return () => {
       cancelled = true;
     };
-  }, [applySavedGame, initialLang]);
+  }, [applySavedGame, applyGameMeta, switchGameLanguage]);
 
   useEffect(() => {
-    if (!ready || mode !== "daily") return;
+    if (!dictReady || mode !== "daily") return;
     saveGame({ dateKey, guesses, currentGuess, status, language: gameLang }, gameLang);
-  }, [ready, mode, dateKey, guesses, currentGuess, status, gameLang]);
+  }, [dictReady, mode, dateKey, guesses, currentGuess, status, gameLang]);
 
   const currentRow = guesses.length;
 
@@ -230,7 +240,7 @@ export default function App() {
       if (isGameLangCode(lang.code) && lang.available) {
         const code = lang.code;
         if (code !== gameLang) {
-          switchGameLanguage(code);
+          void switchGameLanguage(code);
         }
       }
       gameRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -361,7 +371,7 @@ export default function App() {
   const isDaily = mode === "daily";
   const isTraining = mode === "training";
 
-  if (!ready) {
+  if (!dictReady) {
     return (
       <div className="app-page min-h-screen flex items-center justify-center">
         <div
