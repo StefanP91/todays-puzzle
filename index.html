@@ -35,6 +35,14 @@
     'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
     })(window,document,'script','dataLayer','GTM-W5R4ML96');</script>
     <!-- End Google Tag Manager -->
+    <!-- GA4 custom events (page_view stays with GTM Google Tag) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7E0G7DLSET"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag("js", new Date());
+      gtag("config", "G-7E0G7DLSET", { send_page_view: false });
+    </script>
     <title>Today's Puzzle — Daily Wordle Game</title>
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/icon.svg" />
