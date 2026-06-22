@@ -1,4 +1,4 @@
-import { VALID_LANGS, resolveLang } from "./share-content.mjs";
+import { resolveLang } from "./site-meta.mjs";
 
 export function ogImageUrl(origin, lang) {
   const base = String(origin || "https://today-puzzle.netlify.app").replace(/\/$/, "");
