@@ -45,4 +45,3 @@ admin-credentials.txt
 # Local scratch / tooling (not for deploy)
 deno.lock
 scripts/_*
-public/og/*.png
