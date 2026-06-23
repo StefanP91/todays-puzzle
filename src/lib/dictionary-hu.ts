@@ -142,8 +142,8 @@ export const DICTIONARY_HU: DictionaryEntry[] = [
   { word: "UDVAR", hint: "Ház körüli nyitott tér" },
   { word: "UGRÁS", hint: "Levegőbe lökődés" },
   { word: "UGYAN", hint: "Ugyanaz, megegyező" },
-  { word: "UNOKA", hint: "Gyerek gyereke" },
-  { word: "ÜNNEP", hint: "Különleges ünnepi nap" },
+  { word: "UNOKA", hint: "Gyerek gyereke" },
+  { word: "ÜNNEP", hint: "Különleges ünnepi nap" },
   { word: "VADAS", hint: "Vadászattal foglalkozó" },
   { word: "VAGON", hint: "Vonat szállító része" },
   { word: "VÁROS", hint: "Nagy lakott település" },
@@ -160,9 +160,9 @@ export const DICTIONARY_HU: DictionaryEntry[] = [
   { word: "ZÁPOR", hint: "Hirtelen heves eső" },
   { word: "ZÁRÁS", hint: "Bezár valamit" },
   { word: "ZAVAR", hint: "Megzavar valakit" },
-  { word: "ABRAK", hint: "Varázslatos por vagy főzet" },
+  { word: "ABRAK", hint: "Varázslatos por vagy főzet" },
   { word: "BAGLY", hint: "Éjszakai ragadozó madár" },
-  { word: "BAJUS", hint: "Száj feletti szőrzet" },
+  { word: "BAJUS", hint: "Száj feletti szőrzet" },
   { word: "BIRKA", hint: "Gyapjút adó állat" },
   { word: "BIZTO", hint: "Nem kétséges, szilárd" },
   { word: "BOKSZ", hint: "Harci sport ringben" },
@@ -174,17 +174,17 @@ export const DICTIONARY_HU: DictionaryEntry[] = [
   { word: "DIÓFA", hint: "Diót termő fa" },
   { word: "DUDVA", hint: "Haszontalan növény a kertben" },
   { word: "DÜHÖS", hint: "Nagyon mérges" },
-  { word: "EGYEN", hint: "Minden oldal egyforma" },
-  { word: "FAZÉK", hint: "Edény főzéshez" },
+  { word: "EGYEN", hint: "Minden oldal egyforma" },
+  { word: "FAZÉK", hint: "Edény főzéshez" },
   { word: "GARÁZ", hint: "Autók tároló helye" },
-  { word: "GOMBA", hint: "Erdei növény kalappal" },
+  { word: "GOMBA", hint: "Erdei növény kalappal" },
   { word: "HEGYS", hint: "Magas földformáció" },
-  { word: "HERCE", hint: "Királyi vérű férfi" },
-  { word: "HOROG", hint: "Halászathoz használt eszköz" },
+  { word: "HERCE", hint: "Királyi vérű férfi" },
+  { word: "HOROG", hint: "Halászathoz használt eszköz" },
   { word: "ILLAT", hint: "Kellemes szag" },
   { word: "INNEN", hint: "Ebből a helyből" },
   { word: "IRÁNY", hint: "Merre tart valami" },
-  { word: "ISZIK", hint: "Folyadékot vesz magához" },
+  { word: "ISZIK", hint: "Folyadékot vesz magához" },
   { word: "JÁTÉK", hint: "Szórakozás gyerekeknek" },
   { word: "KALIT", hint: "Kalitka madaraknak" },
   { word: "KARIK", hint: "Kör alakú tárgy" },
@@ -201,16 +201,14 @@ export const DICTIONARY_HU: DictionaryEntry[] = [
   { word: "KÚRIA", hint: "Nemesi kastély" },
   { word: "LASSÚ", hint: "Kis sebességű" },
   { word: "LATIN", hint: "Ókori római nyelv" },
-  { word: "LEVEG", hint: "Lélegzethez szükséges gáz" },
-  { word: "MIATT", hint: "Valami miatt, okból" },
+  { word: "LEVEG", hint: "Lélegzethez szükséges gáz" },
+  { word: "MIATT", hint: "Valami miatt, okból" },
   { word: "PÁROS", hint: "Kettő együtt" },
   { word: "PEREC", hint: "Sós sütemény" },
   { word: "PIHEN", hint: "Pihen, kikapcsolódik" },
-  { word: "POSZT", hint: "Munkakör, állás" },
-  { word: "SARKA", hint: "Madár vagy állat lába" },
-  { word: "TISZA", hint: "Magyarország nagy folyója" },
-  { word: "TIZEN", hint: "Szám tíz" },
-  { word: "VILLA", hint: "Villám az égen" },
+  { word: "POSZT", hint: "Munkakör, állás" }  { word: "TISZA", hint: "Magyarország nagy folyója" },lyója" },
+  { word: "TIZEN", hint: "Szám tíz" },
+  { word: "VILLA", hint: "Villám az égen" },
 ];
 
 export const DICTIONARY_HU_5 = DICTIONARY_HU.filter((e) => e.word.length === 5);
