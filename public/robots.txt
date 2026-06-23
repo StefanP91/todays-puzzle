@@ -4,4 +4,4 @@ Allow: /
 Disallow: /admin
 Disallow: /api/
 
-Sitemap: https://today-puzzle.netlify.app/api/sitemap.xml
+Sitemap: https://today-puzzle.netlify.app/sitemap.xml

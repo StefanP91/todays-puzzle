@@ -18,7 +18,7 @@ Allow: /
 Disallow: /admin
 Disallow: /api/
 
-Sitemap: ${SITE_URL}/api/sitemap.xml
+Sitemap: ${SITE_URL}/sitemap.xml
 `;
 
 mkdirSync(publicDir, { recursive: true });

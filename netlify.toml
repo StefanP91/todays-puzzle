@@ -25,14 +25,14 @@
   force = true
 
 [[redirects]]
-  from = "/api/sitemap.xml"
+  from = "/sitemap.xml"
   to = "/.netlify/functions/sitemap"
   status = 200
   force = true
 
 [[redirects]]
-  from = "/sitemap.xml"
-  to = "/api/sitemap.xml"
+  from = "/api/sitemap.xml"
+  to = "/sitemap.xml"
   status = 301
   force = true
 
