@@ -38,9 +38,20 @@ coverage/
 # Optional local scripts output
 *.log
 
-# Local screenshots / assets (not for repo)
-live-now.png
+# Local screenshots / marketing assets (not for repo)
+live*.png
 admin-credentials.txt
+public/promo/
+
+# Promo image generators (local tooling)
+netlify/functions/lib/fb-image.mjs
+netlify/functions/lib/fb-post-image.mjs
+netlify/functions/lib/game-screenshot.mjs
+netlify/functions/lib/promo-image.mjs
+scripts/generate-fb-images.mjs
+scripts/generate-fb-posts.mjs
+scripts/generate-game-images.mjs
+scripts/generate-promo-images.mjs
 
 # Local scratch / tooling (not for deploy)
 deno.lock

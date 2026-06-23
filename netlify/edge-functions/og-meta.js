@@ -25,7 +25,7 @@ export default async (request, context) => {
       return context.next();
     }
 
-    const lang = url.searchParams.get("lang") ?? "mk";
+    const lang = url.searchParams.get("lang") ?? "en";
     const fnUrl = new URL("/.netlify/functions/home-og", url.origin);
     fnUrl.searchParams.set("lang", lang);
 

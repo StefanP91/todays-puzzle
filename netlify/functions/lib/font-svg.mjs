@@ -71,7 +71,31 @@ function textToPaths(text, x, yTop, fontSize, fill, bold = false) {
   return paths;
 }
 
+export function measureTextWidth(text, fontSize, bold = false) {
+  return measureText(text, fontSize, bold);
+}
+
+export function textToPathsLeft(text, x, yTop, fontSize, fill, bold = false) {
+  return textToPaths(text, x, yTop, fontSize, fill, bold);
+}
+
 export function textToPathsCentered(text, centerX, yTop, fontSize, fill, bold = false) {
   const width = measureText(text, fontSize, bold);
   return textToPaths(text, centerX - width / 2, yTop, fontSize, fill, bold);
+}
+
+export function textToPathsCenteredInRect(
+  text,
+  centerX,
+  rectY,
+  rectHeight,
+  fontSize,
+  fill,
+  bold = false,
+) {
+  const font = bold ? getBoldFont() : getRegularFont();
+  const scale = fontSize / font.unitsPerEm;
+  const textHeight = (font.ascender - font.descender) * scale;
+  const yTop = rectY + (rectHeight - textHeight) / 2;
+  return textToPathsCentered(text, centerX, yTop, fontSize, fill, bold);
 }
