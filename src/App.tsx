@@ -35,7 +35,7 @@ import {
 } from "./lib/storage";
 import { pickRandomTrainingWord } from "./lib/training";
 import { applyPageMeta } from "./lib/pageMeta";
-import { trackEvent, trackGameComplete, trackPageView } from "./lib/analytics";
+import { trackEvent, trackGameComplete, trackPageView, setAnalyticsLanguage } from "./lib/analytics";
 import { trackVisitOnce } from "./lib/trackVisit";
 import { normalizeKey, normalizeWord } from "./lib/words";
 import type { Cell, GameStatus, LetterState } from "./types";
@@ -85,6 +85,7 @@ export default function App() {
   const [statsUpdated, setStatsUpdated] = useState(false);
   const [trainingRound, setTrainingRound] = useState(1);
   const gameRef = useRef<HTMLDivElement>(null);
+  const langTrackedRef = useRef(false);
 
   const gameContent = useMemo(() => getGameContent(gameLang), [gameLang]);
   const siteContent = useMemo(() => getSiteContent(gameLang), [gameLang]);
@@ -93,6 +94,11 @@ export default function App() {
 
   useEffect(() => {
     applyPageMeta(gameLang);
+    if (!langTrackedRef.current) {
+      langTrackedRef.current = true;
+      setAnalyticsLanguage(gameLang);
+      return;
+    }
     trackPageView(gameLang);
   }, [gameLang]);
 

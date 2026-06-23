@@ -143,7 +143,7 @@ export const DICTIONARY_HU: DictionaryEntry[] = [
   { word: "UGRÁS", hint: "Levegőbe lökődés" },
   { word: "UGYAN", hint: "Ugyanaz, megegyező" },
   { word: "UNOKA", hint: "Gyerek gyereke" },
-  { word: "ÜNNEP", hint: "Különleges ünnepi nap" },
+  { word: "ÜNNEP", hint: "Különleges ünnepi nap" },
   { word: "VADAS", hint: "Vadászattal foglalkozó" },
   { word: "VAGON", hint: "Vonat szállító része" },
   { word: "VÁROS", hint: "Nagy lakott település" },
@@ -160,7 +160,7 @@ export const DICTIONARY_HU: DictionaryEntry[] = [
   { word: "ZÁPOR", hint: "Hirtelen heves eső" },
   { word: "ZÁRÁS", hint: "Bezár valamit" },
   { word: "ZAVAR", hint: "Megzavar valakit" },
-  { word: "ABRAK", hint: "Varázslatos por vagy főzet" },
+  { word: "ABRAK", hint: "Varázslatos por vagy főzet" },
   { word: "BAGLY", hint: "Éjszakai ragadozó madár" },
   { word: "BAJUS", hint: "Száj feletti szőrzet" },
   { word: "BIRKA", hint: "Gyapjút adó állat" },
@@ -174,10 +174,10 @@ export const DICTIONARY_HU: DictionaryEntry[] = [
   { word: "DIÓFA", hint: "Diót termő fa" },
   { word: "DUDVA", hint: "Haszontalan növény a kertben" },
   { word: "DÜHÖS", hint: "Nagyon mérges" },
-  { word: "EGYEN", hint: "Minden oldal egyforma" },
-  { word: "FAZÉK", hint: "Edény főzéshez" },
+  { word: "EGYEN", hint: "Minden oldal egyforma" },
+  { word: "FAZÉK", hint: "Edény főzéshez" },
   { word: "GARÁZ", hint: "Autók tároló helye" },
-  { word: "GOMBA", hint: "Erdei növény kalappal" },
+  { word: "GOMBA", hint: "Erdei növény kalappal" },
   { word: "HEGYS", hint: "Magas földformáció" },
   { word: "HERCE", hint: "Királyi vérű férfi" },
   { word: "HOROG", hint: "Halászathoz használt eszköz" },
@@ -201,13 +201,14 @@ export const DICTIONARY_HU: DictionaryEntry[] = [
   { word: "KÚRIA", hint: "Nemesi kastély" },
   { word: "LASSÚ", hint: "Kis sebességű" },
   { word: "LATIN", hint: "Ókori római nyelv" },
-  { word: "LEVEG", hint: "Lélegzethez szükséges gáz" },
-  { word: "MIATT", hint: "Valami miatt, okból" },
+  { word: "LEVEG", hint: "Lélegzethez szükséges gáz" },
+  { word: "MIATT", hint: "Valami miatt, okból" },
   { word: "PÁROS", hint: "Kettő együtt" },
   { word: "PEREC", hint: "Sós sütemény" },
   { word: "PIHEN", hint: "Pihen, kikapcsolódik" },
-  { word: "POSZT", hint: "Munkakör, állás" }  { word: "TISZA", hint: "Magyarország nagy folyója" },lyója" },
-  { word: "TIZEN", hint: "Szám tíz" },
+  { word: "POSZT", hint: "Munkakör, állás" },
+  { word: "TISZA", hint: "Magyarország nagy folyója" },
+  { word: "TIZEN", hint: "Szám tíz" },
   { word: "VILLA", hint: "Villám az égen" },
 ];
 

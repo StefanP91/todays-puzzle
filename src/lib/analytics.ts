@@ -2,11 +2,12 @@ declare global {
   interface Window {
     dataLayer?: unknown[];
     gtag?: (...args: unknown[]) => void;
+    __gaReady?: boolean;
   }
 }
 
-const GTAG_RETRY_MS = 200;
-const GTAG_MAX_ATTEMPTS = 75;
+const GTAG_RETRY_MS = 100;
+const GTAG_MAX_ATTEMPTS = 100;
 
 function getMeasurementId(): string | null {
   const fromMeta = document
@@ -44,9 +45,14 @@ function isAdminPage(): boolean {
   return typeof window !== "undefined" && window.location.pathname.startsWith("/admin");
 }
 
+function isGtagReady(): boolean {
+  return typeof window !== "undefined" && window.__gaReady === true;
+}
+
 function sendGtag(
   name: string,
   params: Record<string, string | number | boolean>,
+  options?: { beacon?: boolean },
   attempt = 0,
 ): void {
   if (typeof window === "undefined" || isAdminPage()) return;
@@ -54,30 +60,36 @@ function sendGtag(
   const measurementId = getMeasurementId();
   if (!measurementId) return;
 
-  const payload: Record<string, string | number | boolean> = {
-    ...params,
-    transport_type: "beacon",
-  };
+  const payload: Record<string, string | number | boolean> = { ...params };
+  if (options?.beacon) payload.transport_type = "beacon";
 
   if (isDebugMode()) {
     payload.debug_mode = true;
     console.info("[GA4]", name, payload);
   }
 
-  if (typeof window.gtag === "function") {
-    window.gtag("event", name, payload);
+  const fire = () => {
+    if (typeof window.gtag === "function") {
+      window.gtag("event", name, payload);
+      return true;
+    }
+    return false;
+  };
+
+  if (isGtagReady() && fire()) return;
+
+  if (attempt < GTAG_MAX_ATTEMPTS) {
+    window.setTimeout(() => sendGtag(name, params, options, attempt + 1), GTAG_RETRY_MS);
     return;
   }
 
-  if (attempt < GTAG_MAX_ATTEMPTS) {
-    window.setTimeout(() => sendGtag(name, params, attempt + 1), GTAG_RETRY_MS);
-    return;
-  }
+  if (fire()) return;
 
   window.dataLayer = window.dataLayer ?? [];
   window.dataLayer.push(["event", name, payload]);
 }
 
+/** Language change in SPA — new page_view with updated path/title. */
 export function trackPageView(lang?: string): void {
   const params: Record<string, string | number | boolean> = {
     page_title: document.title,
@@ -86,6 +98,12 @@ export function trackPageView(lang?: string): void {
   };
   if (lang) params.language = lang;
   sendGtag("page_view", params);
+}
+
+export function setAnalyticsLanguage(lang: string): void {
+  if (isAdminPage() || typeof window.gtag !== "function") return;
+  window.gtag("set", "user_properties", { interface_language: lang });
+  sendGtag("language_view", { language: lang });
 }
 
 export function trackEvent(
@@ -113,13 +131,17 @@ export function trackGameComplete(options: {
     result: options.result,
   };
 
-  sendGtag("game_complete", base);
-  sendGtag("level_end", {
-    ...base,
-    level: options.puzzle_number,
-    level_name: options.game_mode,
-    success,
-  });
+  sendGtag("game_complete", base, { beacon: true });
+  sendGtag(
+    "level_end",
+    {
+      ...base,
+      level: options.puzzle_number,
+      level_name: options.game_mode,
+      success,
+    },
+    { beacon: true },
+  );
 }
 
 export function trackShare(options: {
@@ -128,10 +150,14 @@ export function trackShare(options: {
   puzzle_number: number;
   result: "won" | "lost";
 }): void {
-  sendGtag("share", {
-    method: options.method,
-    language: options.language,
-    puzzle_number: options.puzzle_number,
-    result: options.result,
-  });
+  sendGtag(
+    "share",
+    {
+      method: options.method,
+      language: options.language,
+      puzzle_number: options.puzzle_number,
+      result: options.result,
+    },
+    { beacon: true },
+  );
 }
