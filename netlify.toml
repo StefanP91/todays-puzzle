@@ -30,6 +30,13 @@
   status = 301
   force = true
 
+# Pin static sitemap before SPA catch-all (prevents index.html for crawlers).
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/sitemap.xml"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "/api/geo"
   to = "/.netlify/functions/geo"
@@ -81,7 +88,7 @@
 [[edge_functions]]
   path = "/*"
   function = "og-meta"
-  excludedPath = ["/admin", "/api/*", "/sitemap.xml", "/robots.txt"]
+  excludedPath = ["/admin", "/api/*", "/sitemap.xml", "/robots.txt", "/*.xml"]
 
 [[headers]]
   for = "/admin"

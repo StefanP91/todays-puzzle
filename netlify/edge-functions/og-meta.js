@@ -8,13 +8,14 @@ const SKIP_EXT = /\.(js|css|svg|png|jpg|jpeg|webp|ico|woff2?|map|json|xml|txt)$/
 export default async (request, context) => {
   try {
     const url = new URL(request.url);
+    const pathname = url.pathname.replace(/\/$/, "") || "/";
 
     if (
-      url.pathname === "/admin" ||
-      url.pathname.startsWith("/admin/") ||
-      SKIP_PATHS.has(url.pathname) ||
-      SKIP_PREFIXES.some((prefix) => url.pathname.startsWith(prefix)) ||
-      SKIP_EXT.test(url.pathname)
+      pathname === "/admin" ||
+      pathname.startsWith("/admin/") ||
+      SKIP_PATHS.has(pathname) ||
+      SKIP_PREFIXES.some((prefix) => pathname.startsWith(prefix)) ||
+      SKIP_EXT.test(pathname)
     ) {
       return context.next();
     }
