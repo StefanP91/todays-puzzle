@@ -65,7 +65,7 @@ export const DICTIONARY_HR: DictionaryEntry[] = [
   { word: "KARTA", hint: "Papir s kartom ili podacima" },
   { word: "KLASA", hint: "Učenici uče zajedno u njoj" },
   { word: "KONAC", hint: "Tanak konac za šivanje" },
-  { word: "KOST", hint: "Tvrd dio kostura" },
+  { word: "KOSTI", hint: "Tvrd dio kostura" },
   { word: "KRAVA", hint: "Domaća životinja koja daje mlijeko" },
   { word: "RIJEČ", hint: "Osnovna jedinica govora" },
   { word: "LAMPA", hint: "Daje svjetlost u tami" },

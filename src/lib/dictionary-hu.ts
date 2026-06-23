@@ -142,12 +142,8 @@ export const DICTIONARY_HU: DictionaryEntry[] = [
   { word: "UDVAR", hint: "Ház körüli nyitott tér" },
   { word: "UGRÁS", hint: "Levegőbe lökődés" },
   { word: "UGYAN", hint: "Ugyanaz, megegyező" },
-  { word: "UNOKA", hint: "Gyerek gyereke" },
-  { word: "ÜLÉS", hint: "Leülve tartózkodás" },
-  { word: "ÜNNEP", hint: "Különleges ünnepi nap" },
-  { word: "ÜREG", hint: "Üres tér valami belsejében" },
-  { word: "ÜTEM", hint: "Ritmus, tempó" },
-  { word: "ÜVEG", hint: "Átlátszó anyag ablakokhoz" },
+  { word: "UNOKA", hint: "Gyerek gyereke" },
+  { word: "ÜNNEP", hint: "Különleges ünnepi nap" },
   { word: "VADAS", hint: "Vadászattal foglalkozó" },
   { word: "VAGON", hint: "Vonat szállító része" },
   { word: "VÁROS", hint: "Nagy lakott település" },
@@ -164,13 +160,9 @@ export const DICTIONARY_HU: DictionaryEntry[] = [
   { word: "ZÁPOR", hint: "Hirtelen heves eső" },
   { word: "ZÁRÁS", hint: "Bezár valamit" },
   { word: "ZAVAR", hint: "Megzavar valakit" },
-  { word: "ABRAK", hint: "Varázslatos por vagy főzet" },
-  { word: "ALAK", hint: "Valami külső formája" },
-  { word: "ARAT", hint: "Betakarítja a termést" },
-  { word: "AZON", hint: "Azonos, ugyanaz" },
+  { word: "ABRAK", hint: "Varázslatos por vagy főzet" },
   { word: "BAGLY", hint: "Éjszakai ragadozó madár" },
-  { word: "BAJUS", hint: "Száj feletti szőrzet" },
-  { word: "BARÁ", hint: "Közeli, megbízható ember" },
+  { word: "BAJUS", hint: "Száj feletti szőrzet" },
   { word: "BIRKA", hint: "Gyapjút adó állat" },
   { word: "BIZTO", hint: "Nem kétséges, szilárd" },
   { word: "BOKSZ", hint: "Harci sport ringben" },
@@ -182,28 +174,17 @@ export const DICTIONARY_HU: DictionaryEntry[] = [
   { word: "DIÓFA", hint: "Diót termő fa" },
   { word: "DUDVA", hint: "Haszontalan növény a kertben" },
   { word: "DÜHÖS", hint: "Nagyon mérges" },
-  { word: "EGYEN", hint: "Minden oldal egyforma" },
-  { word: "ÉPÍT", hint: "Házat vagy utat készít" },
-  { word: "ÉRDE", hint: "Figyelmet kelt benne" },
-  { word: "ÉRZÉ", hint: "Érzékel valamit a bőrén" },
-  { word: "FAZÉK", hint: "Edény főzéshez" },
-  { word: "FESZ", hint: "Megfeszít valamit" },
-  { word: "FÜRD", hint: "Vízben mosakszik" },
-  { word: "FÜST", hint: "Égésből származó gáz" },
+  { word: "EGYEN", hint: "Minden oldal egyforma" },
+  { word: "FAZÉK", hint: "Edény főzéshez" },
   { word: "GARÁZ", hint: "Autók tároló helye" },
-  { word: "GOMBA", hint: "Erdei növény kalappal" },
-  { word: "GYÁR", hint: "Termékek előállító üzeme" },
-  { word: "HAGY", hint: "Enged valamit történni" },
+  { word: "GOMBA", hint: "Erdei növény kalappal" },
   { word: "HEGYS", hint: "Magas földformáció" },
-  { word: "HERCE", hint: "Királyi vérű férfi" },
-  { word: "HORD", hint: "Visz valamit magával" },
-  { word: "HOROG", hint: "Halászathoz használt eszköz" },
-  { word: "IDEG", hint: "Test jelzőrendszere" },
+  { word: "HERCE", hint: "Királyi vérű férfi" },
+  { word: "HOROG", hint: "Halászathoz használt eszköz" },
   { word: "ILLAT", hint: "Kellemes szag" },
   { word: "INNEN", hint: "Ebből a helyből" },
   { word: "IRÁNY", hint: "Merre tart valami" },
-  { word: "ISZIK", hint: "Folyadékot vesz magához" },
-  { word: "JÁR", hint: "Lábbal mozog" },
+  { word: "ISZIK", hint: "Folyadékot vesz magához" },
   { word: "JÁTÉK", hint: "Szórakozás gyerekeknek" },
   { word: "KALIT", hint: "Kalitka madaraknak" },
   { word: "KARIK", hint: "Kör alakú tárgy" },
@@ -220,48 +201,16 @@ export const DICTIONARY_HU: DictionaryEntry[] = [
   { word: "KÚRIA", hint: "Nemesi kastély" },
   { word: "LASSÚ", hint: "Kis sebességű" },
   { word: "LATIN", hint: "Ókori római nyelv" },
-  { word: "LEVEG", hint: "Lélegzethez szükséges gáz" },
-  { word: "MAGY", hint: "Magyar nemzethez tartozó" },
-  { word: "MÉLY", hint: "Alacsony helyen van" },
-  { word: "MÉR", hint: "Megállapít valaminek a méretét" },
-  { word: "MIATT", hint: "Valami miatt, okból" },
-  { word: "MOS", hint: "Tisztít vízzel" },
-  { word: "MÚLT", hint: "Már elmúlt idő" },
-  { word: "NÉHA", hint: "Időnként, alkalmanként" },
-  { word: "NYIT", hint: "Kinyit egy ajtót" },
-  { word: "OKOS", hint: "Értelmes, okos" },
+  { word: "LEVEG", hint: "Lélegzethez szükséges gáz" },
+  { word: "MIATT", hint: "Valami miatt, okból" },
   { word: "PÁROS", hint: "Kettő együtt" },
   { word: "PEREC", hint: "Sós sütemény" },
   { word: "PIHEN", hint: "Pihen, kikapcsolódik" },
-  { word: "POSZT", hint: "Munkakör, állás" },
-  { word: "RÁNT", hint: "Hirtelen megmozdul" },
-  { word: "REND", hint: "Szabályos állapot" },
-  { word: "RÉPA", hint: "Narancssárga gyökérzöldség" },
-  { word: "RÉSZ", hint: "Egy egész darabja" },
-  { word: "RIGÓ", hint: "Fekete tollú énekes madár" },
-  { word: "RÓKA", hint: "Ravasz erdei állat" },
-  { word: "RÓMA", hint: "Olaszország fővárosa" },
-  { word: "SARKA", hint: "Madár vagy állat lába" },
-  { word: "SÉTA", hint: "Gyalogos sétálás" },
-  { word: "SOK", hint: "Nagy mennyiség" },
-  { word: "SOR", hint: "Egymás mellett álló sor" },
-  { word: "SÜT", hint: "Sütőben készít ételt" },
-  { word: "SZÁM", hint: "Mennyiséget jelölő jegy" },
-  { word: "SZER", hint: "Valamit csinál, tesz" },
-  { word: "TÁNC", hint: "Zene ritmusára mozog" },
-  { word: "TÉLI", hint: "Télhez tartozó" },
-  { word: "TÉSZ", hint: "Lisztből készült tészta" },
+  { word: "POSZT", hint: "Munkakör, állás" },
+  { word: "SARKA", hint: "Madár vagy állat lába" },
   { word: "TISZA", hint: "Magyarország nagy folyója" },
-  { word: "TIZEN", hint: "Szám tíz" },
-  { word: "TOLL", hint: "Írásra használt eszköz" },
-  { word: "TÖBB", hint: "Nagyobb mennyiség" },
-  { word: "VAD", hint: "Megszelídítetlen, természetben élő" },
-  { word: "VÁR", hint: "Erős falú középkori épület" },
-  { word: "VAST", hint: "Erős, kemény anyag" },
-  { word: "VÉG", hint: "Valaminek a befejezése" },
-  { word: "VIDÉ", hint: "Vidám, derűs" },
-  { word: "VILLA", hint: "Villám az égen" },
-  { word: "ZAJ", hint: "Hangos zavaró zaj" },
+  { word: "TIZEN", hint: "Szám tíz" },
+  { word: "VILLA", hint: "Villám az égen" },
 ];
 
 export const DICTIONARY_HU_5 = DICTIONARY_HU.filter((e) => e.word.length === 5);

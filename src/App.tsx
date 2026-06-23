@@ -35,7 +35,7 @@ import {
 } from "./lib/storage";
 import { pickRandomTrainingWord } from "./lib/training";
 import { applyPageMeta } from "./lib/pageMeta";
-import { trackEvent, trackPageView } from "./lib/analytics";
+import { trackEvent, trackGameComplete, trackPageView } from "./lib/analytics";
 import { trackVisitOnce } from "./lib/trackVisit";
 import { normalizeKey, normalizeWord } from "./lib/words";
 import type { Cell, GameStatus, LetterState } from "./types";
@@ -288,11 +288,11 @@ export default function App() {
 
     if (normalizeWord(currentGuess, gameLang) === normalizeWord(answer, gameLang)) {
       setStatus("won");
-      trackEvent("game_complete", {
+      trackGameComplete({
         result: "won",
-        mode,
+        game_mode: mode,
         language: gameLang,
-        guesses: newGuesses.length,
+        guess_count: newGuesses.length,
         puzzle_number: puzzleNumber,
       });
       if (mode === "daily") {
@@ -307,11 +307,11 @@ export default function App() {
 
     if (newGuesses.length >= MAX_GUESSES) {
       setStatus("lost");
-      trackEvent("game_complete", {
+      trackGameComplete({
         result: "lost",
-        mode,
+        game_mode: mode,
         language: gameLang,
-        guesses: newGuesses.length,
+        guess_count: newGuesses.length,
         puzzle_number: puzzleNumber,
       });
       if (mode === "daily") {

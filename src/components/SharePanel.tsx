@@ -16,7 +16,7 @@ import {
   shareToFacebook,
   shareToInstagram,
 } from "../lib/share";
-import { trackEvent } from "../lib/analytics";
+import { trackShare } from "../lib/analytics";
 
 interface SharePanelProps {
   shareText: string;
@@ -102,7 +102,7 @@ export default function SharePanel({
   const shareUrl = getShareUrl();
 
   async function handleSocial(id: (typeof SOCIAL_BUTTONS)[number]["id"]) {
-    trackEvent("share", {
+    trackShare({
       method: id,
       language: lang,
       puzzle_number: puzzleNumber,
@@ -166,7 +166,7 @@ export default function SharePanel({
   }
 
   async function handleCopy() {
-    trackEvent("share", {
+    trackShare({
       method: "copy",
       language: lang,
       puzzle_number: puzzleNumber,
@@ -180,7 +180,7 @@ export default function SharePanel({
   }
 
   async function handleNativeShare() {
-    trackEvent("share", {
+    trackShare({
       method: "native",
       language: lang,
       puzzle_number: puzzleNumber,
