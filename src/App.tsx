@@ -85,7 +85,6 @@ export default function App() {
   const [statsUpdated, setStatsUpdated] = useState(false);
   const [trainingRound, setTrainingRound] = useState(1);
   const gameRef = useRef<HTMLDivElement>(null);
-  const langTrackedRef = useRef(false);
 
   const gameContent = useMemo(() => getGameContent(gameLang), [gameLang]);
   const siteContent = useMemo(() => getSiteContent(gameLang), [gameLang]);
@@ -94,12 +93,8 @@ export default function App() {
 
   useEffect(() => {
     applyPageMeta(gameLang);
-    if (!langTrackedRef.current) {
-      langTrackedRef.current = true;
-      setAnalyticsLanguage(gameLang);
-      return;
-    }
     trackPageView(gameLang);
+    setAnalyticsLanguage(gameLang);
   }, [gameLang]);
 
   useEffect(() => {

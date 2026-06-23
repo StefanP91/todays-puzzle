@@ -2,12 +2,11 @@ declare global {
   interface Window {
     dataLayer?: unknown[];
     gtag?: (...args: unknown[]) => void;
-    __gaReady?: boolean;
   }
 }
 
-const GTAG_RETRY_MS = 100;
-const GTAG_MAX_ATTEMPTS = 100;
+const GTAG_RETRY_MS = 50;
+const GTAG_MAX_ATTEMPTS = 40;
 
 function getMeasurementId(): string | null {
   const fromMeta = document
@@ -22,7 +21,7 @@ function getMeasurementId(): string | null {
   return null;
 }
 
-function isDebugMode(): boolean {
+export function isDebugMode(): boolean {
   if (typeof window === "undefined") return false;
   return (
     import.meta.env.DEV ||
@@ -45,10 +44,6 @@ function isAdminPage(): boolean {
   return typeof window !== "undefined" && window.location.pathname.startsWith("/admin");
 }
 
-function isGtagReady(): boolean {
-  return typeof window !== "undefined" && window.__gaReady === true;
-}
-
 function sendGtag(
   name: string,
   params: Record<string, string | number | boolean>,
@@ -64,32 +59,38 @@ function sendGtag(
   if (options?.beacon) payload.transport_type = "beacon";
 
   if (isDebugMode()) {
-    payload.debug_mode = true;
     console.info("[GA4]", name, payload);
   }
 
-  const fire = () => {
-    if (typeof window.gtag === "function") {
-      window.gtag("event", name, payload);
-      return true;
-    }
-    return false;
-  };
-
-  if (isGtagReady() && fire()) return;
+  if (typeof window.gtag === "function") {
+    window.gtag("event", name, payload);
+    return;
+  }
 
   if (attempt < GTAG_MAX_ATTEMPTS) {
     window.setTimeout(() => sendGtag(name, params, options, attempt + 1), GTAG_RETRY_MS);
     return;
   }
 
-  if (fire()) return;
-
   window.dataLayer = window.dataLayer ?? [];
   window.dataLayer.push(["event", name, payload]);
 }
 
-/** Language change in SPA — new page_view with updated path/title. */
+/** Enable GA4 DebugView when ?ga_debug=1 is in the URL. */
+export function initAnalytics(): void {
+  if (typeof window === "undefined" || isAdminPage()) return;
+
+  const measurementId = getMeasurementId();
+  if (!measurementId || typeof window.gtag !== "function") return;
+
+  if (isDebugMode()) {
+    window.gtag("config", measurementId, { debug_mode: true });
+    console.info(
+      "[GA4] debug_mode ON → open GA4 Admin → Data display → DebugView (not Realtime)",
+    );
+  }
+}
+
 export function trackPageView(lang?: string): void {
   const params: Record<string, string | number | boolean> = {
     page_title: document.title,
@@ -103,7 +104,6 @@ export function trackPageView(lang?: string): void {
 export function setAnalyticsLanguage(lang: string): void {
   if (isAdminPage() || typeof window.gtag !== "function") return;
   window.gtag("set", "user_properties", { interface_language: lang });
-  sendGtag("language_view", { language: lang });
 }
 
 export function trackEvent(
@@ -114,7 +114,6 @@ export function trackEvent(
   sendGtag(name, cleanParams(params));
 }
 
-/** GA4 Games recommended event + custom alias for reports. */
 export function trackGameComplete(options: {
   result: "won" | "lost";
   game_mode: "daily" | "training";
@@ -161,3 +160,5 @@ export function trackShare(options: {
     { beacon: true },
   );
 }
+
+initAnalytics();
