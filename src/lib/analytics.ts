@@ -38,46 +38,31 @@ function cleanParams(
   return clean;
 }
 
-/** Load gtag.js for custom events (GTM Google Tag keeps page views). */
-function ensureGtag(): void {
-  if (typeof window === "undefined") return;
-
-  const measurementId = getMeasurementId();
-  if (!measurementId) return;
-
-  window.dataLayer = window.dataLayer ?? [];
-  if (!window.gtag) {
-    window.gtag = function gtag(...args: unknown[]) {
-      window.dataLayer!.push(args);
-    };
-    window.gtag("js", new Date());
-    window.gtag("config", measurementId, { send_page_view: false });
-  }
-
-  if (document.querySelector(`script[data-ga-events="${measurementId}"]`)) return;
-
-  const script = document.createElement("script");
-  script.async = true;
-  script.dataset.gaEvents = measurementId;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
-  document.head.appendChild(script);
-}
-
 function sendGtagEvent(
   name: string,
   params: Record<string, string | number | boolean>,
   attempt = 0,
 ): void {
-  ensureGtag();
+  if (typeof window === "undefined") return;
+
+  const measurementId = getMeasurementId();
+  if (!measurementId) return;
+
+  const payload = { ...params, send_to: measurementId };
 
   if (typeof window.gtag === "function") {
-    window.gtag("event", name, params);
+    window.gtag("event", name, payload);
     return;
   }
 
   if (attempt < GTAG_MAX_ATTEMPTS) {
     window.setTimeout(() => sendGtagEvent(name, params, attempt + 1), GTAG_RETRY_MS);
+    return;
   }
+
+  // Fallback: gtag command queue (processed when gtag.js loads)
+  window.dataLayer = window.dataLayer ?? [];
+  window.dataLayer.push(["event", name, payload]);
 }
 
 /** GTM Google Tag handles page_view — only expose language on dataLayer for optional triggers. */
@@ -96,6 +81,3 @@ export function trackEvent(
   pushDataLayer({ event: name, ...clean });
   sendGtagEvent(name, clean);
 }
-
-// Start loading gtag as soon as the app bundle runs.
-ensureGtag();

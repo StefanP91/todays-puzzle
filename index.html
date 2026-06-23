@@ -35,8 +35,8 @@
     'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
     })(window,document,'script','dataLayer','GTM-W5R4ML96');</script>
     <!-- End Google Tag Manager -->
-    <!-- GA4 custom events (page_view stays with GTM Google Tag) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7E0G7DLSET"></script>
+    <!-- GA4: gtag.js loaded once; page_view via GTM, custom events via trackEvent() -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7E0G7DLSET" data-ga-loader="true"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
