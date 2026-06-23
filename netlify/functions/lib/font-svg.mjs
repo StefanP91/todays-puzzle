@@ -75,6 +75,12 @@ export function measureTextWidth(text, fontSize, bold = false) {
   return measureText(text, fontSize, bold);
 }
 
+export function textLineHeight(fontSize, bold = false) {
+  const font = bold ? getBoldFont() : getRegularFont();
+  const scale = fontSize / font.unitsPerEm;
+  return (font.ascender - font.descender) * scale;
+}
+
 export function textToPathsLeft(text, x, yTop, fontSize, fill, bold = false) {
   return textToPaths(text, x, yTop, fontSize, fill, bold);
 }

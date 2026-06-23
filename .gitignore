@@ -45,6 +45,7 @@ public/promo/
 
 # Promo image generators (local tooling)
 netlify/functions/lib/fb-image.mjs
+netlify/functions/lib/fb-post-copy.mjs
 netlify/functions/lib/fb-post-image.mjs
 netlify/functions/lib/game-screenshot.mjs
 netlify/functions/lib/promo-image.mjs
