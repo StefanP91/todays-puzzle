@@ -25,12 +25,6 @@
   force = true
 
 [[redirects]]
-  from = "/sitemap.xml"
-  to = "/.netlify/functions/sitemap"
-  status = 200
-  force = true
-
-[[redirects]]
   from = "/api/sitemap.xml"
   to = "/sitemap.xml"
   status = 301
@@ -105,14 +99,11 @@
     Content-Type = "text/plain; charset=utf-8"
 
 [[headers]]
-  for = "/api/sitemap.xml"
-  [headers.values]
-    Content-Type = "application/xml; charset=utf-8"
-
-[[headers]]
   for = "/sitemap.xml"
   [headers.values]
     Content-Type = "application/xml; charset=utf-8"
+    X-Content-Type-Options = "nosniff"
+    Cache-Control = "public, max-age=3600"
 
 [[headers]]
   for = "/og/*"
