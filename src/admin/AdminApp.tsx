@@ -30,6 +30,33 @@ function percent(count: number, total: number): string {
   return `${((count / total) * 100).toFixed(1)}%`;
 }
 
+const STATS_TIME_ZONE = "Europe/Skopje";
+
+function dateKeyInStatsZone(date: Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: STATS_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
+/** Pad sparse visit history so the chart always shows the last N days (like FB insights). */
+function fillDailySeries(series: { date: string; total: number }[], days = 30) {
+  const byDate = new Map(series.map((day) => [day.date, day.total]));
+  const filled: { date: string; total: number }[] = [];
+  const today = new Date();
+
+  for (let offset = days - 1; offset >= 0; offset -= 1) {
+    const date = new Date(today);
+    date.setDate(today.getDate() - offset);
+    const dateKey = dateKeyInStatsZone(date);
+    filled.push({ date: dateKey, total: byDate.get(dateKey) ?? 0 });
+  }
+
+  return filled;
+}
+
 function CountrySourceTable({ rows, total }: { rows: CountrySourceStat[]; total: number }) {
   if (!total) {
     return <p className="admin-empty">No visits recorded yet.</p>;
@@ -105,21 +132,26 @@ function EngagementStats({ period }: { period: PeriodStats }) {
 function DailyChart({
   series,
   unitLabel = "visit",
+  title = "Last 30 days",
 }: {
   series: { date: string; total: number }[];
   unitLabel?: string;
+  title?: string;
 }) {
-  const max = useMemo(() => Math.max(1, ...series.map((d) => d.total)), [series]);
-  if (!series.length) return null;
+  const displaySeries = useMemo(() => fillDailySeries(series), [series]);
+  const max = useMemo(
+    () => Math.max(1, ...displaySeries.map((d) => d.total)),
+    [displaySeries],
+  );
 
-  const unit = unitLabel + (series.some((d) => d.total !== 1) ? "s" : "");
+  const unit = unitLabel + (displaySeries.some((d) => d.total !== 1) ? "s" : "");
 
   return (
     <div className="admin-chart">
-      <h3 className="admin-section-title">Last 30 days</h3>
+      <h3 className="admin-section-title">{title}</h3>
       <p className="admin-chart-hint">Hover a bar for the date</p>
       <div className="admin-chart-bars">
-        {series.slice(-30).map((day) => (
+        {displaySeries.map((day) => (
           <div
             key={day.date}
             className="admin-chart-bar-col"
@@ -288,16 +320,21 @@ function FacebookDashboard({
         <FbMetricCards title={activeTitle} metrics={activeMetrics} />
       </section>
 
-      {fbStats.dailyPageViews && fbStats.dailyPageViews.length > 0 && (
-        <section className="admin-card">
-          <DailyChart series={fbStats.dailyPageViews} unitLabel="view" />
-        </section>
-      )}
+      <section className="admin-card">
+        <DailyChart
+          series={fbStats.dailyPageViews ?? []}
+          unitLabel="view"
+          title="Page views — last 30 days"
+        />
+      </section>
 
-      {fbStats.dailyReach && fbStats.dailyReach.length > 0 && (
+      {(fbStats.dailyReach?.length ?? 0) > 0 && (
         <section className="admin-card">
-          <h3 className="admin-section-title">Daily reach</h3>
-          <DailyChart series={fbStats.dailyReach} unitLabel="person" />
+          <DailyChart
+            series={fbStats.dailyReach ?? []}
+            unitLabel="person"
+            title="Daily reach — last 30 days"
+          />
         </section>
       )}
 
@@ -570,7 +607,13 @@ export default function AdminApp() {
               <CountrySourceTable rows={active.period.byCountrySource} total={active.period.total} />
             </section>
 
-            {stats && <DailyChart series={stats.dailySeries} />}
+            <section className="admin-card">
+              <DailyChart
+                series={stats?.dailySeries ?? []}
+                unitLabel="visit"
+                title="Daily visits — last 30 days"
+              />
+            </section>
           </>
         ) : (
           <FacebookDashboard fbStats={fbStats} fbTab={fbTab} onTabChange={setFbTab} />
