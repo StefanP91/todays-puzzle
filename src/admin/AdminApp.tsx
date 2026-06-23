@@ -5,16 +5,25 @@ import {
   checkAdminSession,
   countryLabel,
   fetchAdminStats,
+  fetchFbPageStats,
   formatDisplayDate,
   formatDuration,
   formatMonthLabel,
   sourceLabel,
   type AdminStats,
   type CountrySourceStat,
+  type FbMetricBlock,
+  type FbPageStats,
   type PeriodStats,
 } from "./adminApi";
 
 type Tab = "today" | "month" | "all";
+type MainView = "website" | "facebook";
+
+function formatMetric(value: number | null | undefined): string {
+  if (value == null) return "—";
+  return value.toLocaleString();
+}
 
 function percent(count: number, total: number): string {
   if (!total) return "0%";
@@ -93,9 +102,17 @@ function EngagementStats({ period }: { period: PeriodStats }) {
   );
 }
 
-function DailyChart({ series }: { series: { date: string; total: number }[] }) {
+function DailyChart({
+  series,
+  unitLabel = "visit",
+}: {
+  series: { date: string; total: number }[];
+  unitLabel?: string;
+}) {
   const max = useMemo(() => Math.max(1, ...series.map((d) => d.total)), [series]);
   if (!series.length) return null;
+
+  const unit = unitLabel + (series.some((d) => d.total !== 1) ? "s" : "");
 
   return (
     <div className="admin-chart">
@@ -106,7 +123,7 @@ function DailyChart({ series }: { series: { date: string; total: number }[] }) {
           <div
             key={day.date}
             className="admin-chart-bar-col"
-            title={`${formatDisplayDate(day.date)}: ${day.total} visit${day.total === 1 ? "" : "s"}`}
+            title={`${formatDisplayDate(day.date)}: ${day.total} ${unit}`}
           >
             <div
               className="admin-chart-bar"
@@ -120,6 +137,186 @@ function DailyChart({ series }: { series: { date: string; total: number }[] }) {
   );
 }
 
+function FbMetricCards({
+  title,
+  metrics,
+}: {
+  title: string;
+  metrics: FbMetricBlock;
+}) {
+  return (
+    <div className="admin-fb-metrics">
+      <h3 className="admin-section-title admin-section-title--sub">{title}</h3>
+      <div className="admin-fb-metrics-grid">
+        <div className="admin-engagement-card">
+          <span className="admin-engagement-label">Page views</span>
+          <strong>{formatMetric(metrics.pageViews)}</strong>
+        </div>
+        <div className="admin-engagement-card">
+          <span className="admin-engagement-label">Reach</span>
+          <strong>{formatMetric(metrics.reach)}</strong>
+        </div>
+        <div className="admin-engagement-card">
+          <span className="admin-engagement-label">Post engagements</span>
+          <strong>{formatMetric(metrics.engagements)}</strong>
+        </div>
+        <div className="admin-engagement-card">
+          <span className="admin-engagement-label">New follows</span>
+          <strong>{formatMetric(metrics.newFollows)}</strong>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FacebookDashboard({
+  fbStats,
+  fbTab,
+  onTabChange,
+}: {
+  fbStats: FbPageStats | null;
+  fbTab: Tab;
+  onTabChange: (tab: Tab) => void;
+}) {
+  if (!fbStats) {
+    return (
+      <section className="admin-card">
+        <p className="admin-empty">Loading Facebook stats…</p>
+      </section>
+    );
+  }
+
+  if (!fbStats.configured) {
+    return (
+      <section className="admin-card admin-fb-setup">
+        <h2 className="admin-section-title">Facebook Page — not configured</h2>
+        <p>{fbStats.setupHint}</p>
+        <ol className="admin-fb-setup-steps">
+          <li>In Meta for Developers, open your app and add the <strong>Pages</strong> product.</li>
+          <li>Generate a <strong>Page access token</strong> with <code>pages_read_engagement</code> and <code>read_insights</code>.</li>
+          <li>In Netlify → Environment variables, set <code>FACEBOOK_PAGE_ID</code> and <code>FACEBOOK_PAGE_ACCESS_TOKEN</code>.</li>
+          <li>Redeploy the site and refresh this page.</li>
+        </ol>
+      </section>
+    );
+  }
+
+  const todayMetrics: FbMetricBlock = {
+    pageViews: fbStats.today?.pageViews ?? null,
+    reach: fbStats.today?.reach ?? null,
+    engagements: fbStats.today?.engagements ?? null,
+    newFollows: fbStats.today?.newFollows ?? null,
+  };
+
+  const monthMetrics: FbMetricBlock = {
+    pageViews: fbStats.month?.pageViews ?? null,
+    reach: fbStats.month?.reach ?? null,
+    engagements: fbStats.month?.engagements ?? null,
+    newFollows: fbStats.month?.newFollows ?? null,
+  };
+
+  const days28Metrics: FbMetricBlock = fbStats.days28 ?? {
+    pageViews: null,
+    reach: null,
+    engagements: null,
+    newFollows: null,
+  };
+
+  const activeMetrics =
+    fbTab === "today" ? todayMetrics : fbTab === "month" ? monthMetrics : days28Metrics;
+
+  const activeTitle =
+    fbTab === "today"
+      ? `Today (${fbStats.today?.date ? formatDisplayDate(fbStats.today.date) : "—"})`
+      : fbTab === "month"
+        ? formatMonthLabel(fbStats.month?.month ?? "")
+        : "Last 28 days";
+
+  return (
+    <>
+      {fbStats.error && <p className="admin-error">{fbStats.error}</p>}
+
+      <section className="admin-card admin-fb-page-card">
+        <div className="admin-fb-page-head">
+          <div>
+            <h2 className="admin-section-title">{fbStats.page?.name || "Facebook Page"}</h2>
+            {fbStats.page?.link && (
+              <a className="admin-fb-link" href={fbStats.page.link} target="_blank" rel="noreferrer">
+                {fbStats.page.link}
+              </a>
+            )}
+          </div>
+          <div className="admin-fb-followers">
+            <span className="admin-engagement-label">Followers</span>
+            <strong>{formatMetric(fbStats.page?.followersCount)}</strong>
+          </div>
+        </div>
+        {fbStats.note && <p className="admin-fb-note">{fbStats.note}</p>}
+      </section>
+
+      <div className="admin-summary-grid">
+        <button
+          type="button"
+          className={`admin-summary-card${fbTab === "today" ? " is-active" : ""}`}
+          onClick={() => onTabChange("today")}
+        >
+          <span>Today</span>
+          <strong>{formatMetric(todayMetrics.pageViews)}</strong>
+          <small>page views</small>
+        </button>
+        <button
+          type="button"
+          className={`admin-summary-card${fbTab === "month" ? " is-active" : ""}`}
+          onClick={() => onTabChange("month")}
+        >
+          <span>This month</span>
+          <strong>{formatMetric(monthMetrics.pageViews)}</strong>
+          <small>page views</small>
+        </button>
+        <button
+          type="button"
+          className={`admin-summary-card${fbTab === "all" ? " is-active" : ""}`}
+          onClick={() => onTabChange("all")}
+        >
+          <span>28 days</span>
+          <strong>{formatMetric(days28Metrics.pageViews)}</strong>
+          <small>page views</small>
+        </button>
+      </div>
+
+      <section className="admin-card">
+        <FbMetricCards title={activeTitle} metrics={activeMetrics} />
+      </section>
+
+      {fbStats.dailyPageViews && fbStats.dailyPageViews.length > 0 && (
+        <section className="admin-card">
+          <DailyChart series={fbStats.dailyPageViews} unitLabel="view" />
+        </section>
+      )}
+
+      {fbStats.dailyReach && fbStats.dailyReach.length > 0 && (
+        <section className="admin-card">
+          <h3 className="admin-section-title">Daily reach</h3>
+          <DailyChart series={fbStats.dailyReach} unitLabel="person" />
+        </section>
+      )}
+
+      {fbStats.metricErrors && fbStats.metricErrors.length > 0 && (
+        <section className="admin-card admin-fb-warnings">
+          <h3 className="admin-section-title admin-section-title--sub">Partial data</h3>
+          <ul>
+            {fbStats.metricErrors.map((item) => (
+              <li key={item.metric}>
+                <code>{item.metric}</code>: {item.message}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </>
+  );
+}
+
 export default function AdminApp() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [email, setEmail] = useState("");
@@ -127,14 +324,18 @@ export default function AdminApp() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState<AdminStats | null>(null);
+  const [fbStats, setFbStats] = useState<FbPageStats | null>(null);
+  const [mainView, setMainView] = useState<MainView>("website");
   const [tab, setTab] = useState<Tab>("today");
+  const [fbTab, setFbTab] = useState<Tab>("today");
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const refreshInFlight = useRef(false);
 
   const loadStats = useCallback(async () => {
-    const data = await fetchAdminStats();
-    setStats(data);
+    const [website, facebook] = await Promise.all([fetchAdminStats(), fetchFbPageStats()]);
+    setStats(website);
+    setFbStats(facebook);
     setLastUpdated(new Date());
   }, []);
 
@@ -194,6 +395,7 @@ export default function AdminApp() {
     await adminLogout();
     setAuthenticated(false);
     setStats(null);
+    setFbStats(null);
   }
 
   if (authenticated === null) {
@@ -278,7 +480,11 @@ export default function AdminApp() {
       <header className="admin-header">
         <div>
           <h1>Analytics</h1>
-          <p className="admin-subtitle">Visits, sources, time on site, and devices</p>
+          <p className="admin-subtitle">
+            {mainView === "website"
+              ? "Visits, sources, time on site, and devices"
+              : "Facebook Page views, reach, engagement, and followers"}
+          </p>
         </div>
         <div className="admin-header-actions">
           <button
@@ -299,53 +505,76 @@ export default function AdminApp() {
         </div>
       </header>
 
+      <div className="admin-main-tabs">
+        <button
+          type="button"
+          className={`admin-main-tab${mainView === "website" ? " is-active" : ""}`}
+          onClick={() => setMainView("website")}
+        >
+          Website
+        </button>
+        <button
+          type="button"
+          className={`admin-main-tab${mainView === "facebook" ? " is-active" : ""}`}
+          onClick={() => setMainView("facebook")}
+        >
+          Facebook Page
+        </button>
+      </div>
+
       {lastUpdated && (
         <p className="admin-updated-line">
           Last updated: {lastUpdated.toLocaleTimeString()}
         </p>
       )}
 
-      <div className="admin-summary-grid">
-        <button
-          type="button"
-          className={`admin-summary-card${tab === "today" ? " is-active" : ""}`}
-          onClick={() => setTab("today")}
-        >
-          <span>Today</span>
-          <strong>{stats?.today.total.toLocaleString() ?? "—"}</strong>
-        </button>
-        <button
-          type="button"
-          className={`admin-summary-card${tab === "month" ? " is-active" : ""}`}
-          onClick={() => setTab("month")}
-        >
-          <span>This month</span>
-          <strong>{stats?.month.total.toLocaleString() ?? "—"}</strong>
-        </button>
-        <button
-          type="button"
-          className={`admin-summary-card${tab === "all" ? " is-active" : ""}`}
-          onClick={() => setTab("all")}
-        >
-          <span>All time</span>
-          <strong>{stats?.allTime.total.toLocaleString() ?? "—"}</strong>
-        </button>
-      </div>
-
       {error && <p className="admin-error">{error}</p>}
 
       <div className={`admin-dashboard${refreshing ? " is-refreshing" : ""}`}>
-      <section className="admin-card">
-        <h2 className="admin-section-title">{active.title}</h2>
-        <p className="admin-total-line">
-          Total visits: <strong>{active.period.total.toLocaleString()}</strong>
-        </p>
-        <EngagementStats period={active.period} />
-        <h3 className="admin-section-title admin-section-title--sub">Countries &amp; sources</h3>
-        <CountrySourceTable rows={active.period.byCountrySource} total={active.period.total} />
-      </section>
+        {mainView === "website" ? (
+          <>
+            <div className="admin-summary-grid">
+              <button
+                type="button"
+                className={`admin-summary-card${tab === "today" ? " is-active" : ""}`}
+                onClick={() => setTab("today")}
+              >
+                <span>Today</span>
+                <strong>{stats?.today.total.toLocaleString() ?? "—"}</strong>
+              </button>
+              <button
+                type="button"
+                className={`admin-summary-card${tab === "month" ? " is-active" : ""}`}
+                onClick={() => setTab("month")}
+              >
+                <span>This month</span>
+                <strong>{stats?.month.total.toLocaleString() ?? "—"}</strong>
+              </button>
+              <button
+                type="button"
+                className={`admin-summary-card${tab === "all" ? " is-active" : ""}`}
+                onClick={() => setTab("all")}
+              >
+                <span>All time</span>
+                <strong>{stats?.allTime.total.toLocaleString() ?? "—"}</strong>
+              </button>
+            </div>
 
-      {stats && <DailyChart series={stats.dailySeries} />}
+            <section className="admin-card">
+              <h2 className="admin-section-title">{active.title}</h2>
+              <p className="admin-total-line">
+                Total visits: <strong>{active.period.total.toLocaleString()}</strong>
+              </p>
+              <EngagementStats period={active.period} />
+              <h3 className="admin-section-title admin-section-title--sub">Countries &amp; sources</h3>
+              <CountrySourceTable rows={active.period.byCountrySource} total={active.period.total} />
+            </section>
+
+            {stats && <DailyChart series={stats.dailySeries} />}
+          </>
+        ) : (
+          <FacebookDashboard fbStats={fbStats} fbTab={fbTab} onTabChange={setFbTab} />
+        )}
       </div>
     </div>
   );

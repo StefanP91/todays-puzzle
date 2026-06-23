@@ -84,6 +84,48 @@ export async function fetchAdminStats(): Promise<AdminStats> {
   return parseJson<AdminStats>(response);
 }
 
+export interface FbMetricBlock {
+  pageViews: number | null;
+  reach: number | null;
+  engagements: number | null;
+  newFollows: number | null;
+}
+
+export interface FbPageStatsConfigured {
+  configured: true;
+  lastFetched?: string;
+  page?: {
+    id: string;
+    name: string;
+    link: string;
+    followersCount: number;
+    fanCount: number | null;
+  };
+  today?: FbMetricBlock & { date: string };
+  month?: FbMetricBlock & { month: string };
+  days28?: FbMetricBlock;
+  dailyPageViews?: { date: string; total: number }[];
+  dailyReach?: { date: string; total: number }[];
+  metricErrors?: { metric: string; message: string }[];
+  note?: string;
+  error?: string;
+}
+
+export interface FbPageStatsUnconfigured {
+  configured: false;
+  setupHint: string;
+}
+
+export type FbPageStats = FbPageStatsConfigured | FbPageStatsUnconfigured;
+
+export async function fetchFbPageStats(): Promise<FbPageStats> {
+  const response = await fetch("/api/admin/fb-stats", {
+    credentials: "include",
+    cache: "no-store",
+  });
+  return parseJson<FbPageStats>(response);
+}
+
 const countryNames = new Intl.DisplayNames(["en"], { type: "region" });
 
 export function countryLabel(code: string): string {

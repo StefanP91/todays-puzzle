@@ -85,6 +85,12 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/api/admin/fb-stats"
+  to = "/.netlify/functions/admin-fb-stats"
+  status = 200
+  force = true
+
 [[edge_functions]]
   path = "/*"
   function = "og-meta"
