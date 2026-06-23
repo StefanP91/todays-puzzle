@@ -21,12 +21,6 @@ function getMeasurementId(): string | null {
   return null;
 }
 
-function pushDataLayer(payload: Record<string, unknown>): void {
-  if (typeof window === "undefined") return;
-  window.dataLayer = window.dataLayer ?? [];
-  window.dataLayer.push(payload);
-}
-
 function cleanParams(
   params?: Record<string, string | number | boolean | undefined>,
 ): Record<string, string | number | boolean> {
@@ -38,12 +32,17 @@ function cleanParams(
   return clean;
 }
 
-function sendGtagEvent(
+function isAdminPage(): boolean {
+  return typeof window !== "undefined" && window.location.pathname.startsWith("/admin");
+}
+
+function sendGtag(
+  command: "event" | "config",
   name: string,
   params: Record<string, string | number | boolean>,
   attempt = 0,
 ): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || isAdminPage()) return;
 
   const measurementId = getMeasurementId();
   if (!measurementId) return;
@@ -51,33 +50,34 @@ function sendGtagEvent(
   const payload = { ...params, send_to: measurementId };
 
   if (typeof window.gtag === "function") {
-    window.gtag("event", name, payload);
+    window.gtag(command, name, payload);
     return;
   }
 
   if (attempt < GTAG_MAX_ATTEMPTS) {
-    window.setTimeout(() => sendGtagEvent(name, params, attempt + 1), GTAG_RETRY_MS);
+    window.setTimeout(() => sendGtag(command, name, params, attempt + 1), GTAG_RETRY_MS);
     return;
   }
 
-  // Fallback: gtag command queue (processed when gtag.js loads)
   window.dataLayer = window.dataLayer ?? [];
-  window.dataLayer.push(["event", name, payload]);
+  window.dataLayer.push([command, name, payload]);
 }
 
-/** GTM Google Tag handles page_view — only expose language on dataLayer for optional triggers. */
+/** Direct GA4 page_view (app sends explicitly on load and language change). */
 export function trackPageView(lang?: string): void {
-  if (!lang) return;
-  pushDataLayer({ page_language: lang });
+  const params: Record<string, string | number | boolean> = {
+    page_title: document.title,
+    page_location: window.location.href,
+    page_path: window.location.pathname + window.location.search,
+  };
+  if (lang) params.language = lang;
+  sendGtag("event", "page_view", params);
 }
 
 export function trackEvent(
   name: string,
   params?: Record<string, string | number | boolean | undefined>,
 ): void {
-  if (typeof window !== "undefined" && window.location.pathname.startsWith("/admin")) return;
-
-  const clean = cleanParams(params);
-  pushDataLayer({ event: name, ...clean });
-  sendGtagEvent(name, clean);
+  if (isAdminPage()) return;
+  sendGtag("event", name, cleanParams(params));
 }
