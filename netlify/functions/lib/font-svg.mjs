@@ -44,8 +44,12 @@ function getBoldFont() {
   return boldFont;
 }
 
+function getFont(bold = false) {
+  return bold ? getBoldFont() : getRegularFont();
+}
+
 function measureText(text, fontSize, bold = false) {
-  const font = bold ? getBoldFont() : getRegularFont();
+  const font = getFont(bold);
   const scale = fontSize / font.unitsPerEm;
   let width = 0;
   for (const char of text) {
@@ -55,7 +59,7 @@ function measureText(text, fontSize, bold = false) {
 }
 
 function textToPaths(text, x, yTop, fontSize, fill, bold = false) {
-  const font = bold ? getBoldFont() : getRegularFont();
+  const font = getFont(bold);
   const scale = fontSize / font.unitsPerEm;
   const baseline = yTop + font.ascender * scale;
   let cursor = x;
@@ -64,7 +68,9 @@ function textToPaths(text, x, yTop, fontSize, fill, bold = false) {
   for (const char of text) {
     const glyph = font.charToGlyph(char);
     const path = glyph.getPath(cursor, baseline, fontSize);
-    paths += `<path d="${path.toPathData(2)}" fill="${fill}"/>`;
+    if (path.commands?.length) {
+      paths += `<path d="${path.toPathData(2)}" fill="${fill}"/>`;
+    }
     cursor += glyph.advanceWidth * scale;
   }
 
@@ -76,7 +82,7 @@ export function measureTextWidth(text, fontSize, bold = false) {
 }
 
 export function textLineHeight(fontSize, bold = false) {
-  const font = bold ? getBoldFont() : getRegularFont();
+  const font = getFont(bold);
   const scale = fontSize / font.unitsPerEm;
   return (font.ascender - font.descender) * scale;
 }
@@ -99,7 +105,7 @@ export function textToPathsCenteredInRect(
   fill,
   bold = false,
 ) {
-  const font = bold ? getBoldFont() : getRegularFont();
+  const font = getFont(bold);
   const scale = fontSize / font.unitsPerEm;
   const textHeight = (font.ascender - font.descender) * scale;
   const yTop = rectY + (rectHeight - textHeight) / 2;
