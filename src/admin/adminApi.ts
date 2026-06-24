@@ -115,6 +115,13 @@ export interface FbPageStatsConfigured {
   } | null;
   tokenWarning?: string | null;
   refreshResult?: { ok: boolean; reason?: string; message?: string; source?: string } | null;
+  envCheck?: {
+    hasPageId: boolean;
+    hasAppId: boolean;
+    hasAppKey: boolean;
+    hasUserToken: boolean;
+    hasPageToken: boolean;
+  };
   note?: string;
   error?: string;
 }

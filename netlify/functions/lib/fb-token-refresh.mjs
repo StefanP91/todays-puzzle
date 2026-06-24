@@ -211,8 +211,10 @@ export async function refreshFbTokens(event, options = {}) {
   if (!appSecret) {
     return {
       ok: false,
-      reason: "missing_app_secret",
-      message: "Set FACEBOOK_APP_KEY in Netlify for automatic token refresh.",
+      reason: "missing_app_key",
+      message:
+        "Set FACEBOOK_APP_KEY in Netlify (App Secret from Meta → Today's Puzzle F Page → Settings → Basic). Use All scopes and the same value for Production, then trigger a new deploy.",
+      envCheck: getFbEnvDiagnostics(),
     };
   }
 
@@ -321,6 +323,16 @@ export async function getPageAccessToken(event) {
       hasUserToken: Boolean(bundle.userAccessToken),
     },
     refreshResult,
+  };
+}
+
+export function getFbEnvDiagnostics() {
+  return {
+    hasPageId: Boolean(getPageId()),
+    hasAppId: Boolean(getServerFacebookAppId()),
+    hasAppKey: Boolean(getAppSecret()),
+    hasUserToken: Boolean(envUserToken()),
+    hasPageToken: Boolean(envPageToken()),
   };
 }
 

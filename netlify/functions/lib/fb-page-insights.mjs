@@ -1,4 +1,4 @@
-import { getPageAccessTokenWithRetry, isFbTokenConfigured } from "./fb-token-refresh.mjs";
+import { getPageAccessTokenWithRetry, getFbEnvDiagnostics, isFbTokenConfigured } from "./fb-token-refresh.mjs";
 
 const GRAPH_VERSION = "v21.0";
 
@@ -142,6 +142,7 @@ export async function fetchFbPageStats(event) {
       error: refreshMessage,
       tokenMeta,
       refreshResult,
+      envCheck: getFbEnvDiagnostics(),
       tokenWarning: buildTokenWarning(tokenMeta),
     };
   }

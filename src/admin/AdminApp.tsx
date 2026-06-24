@@ -267,6 +267,11 @@ function FacebookDashboard({
   return (
     <>
       {fbStats.error && <p className="admin-error">{fbStats.error}</p>}
+      {fbStats.envCheck && !fbStats.envCheck.hasAppKey && (
+        <p className="admin-fb-note admin-fb-token-warning">
+          Missing on server: <code>FACEBOOK_APP_KEY</code>. In Netlify add it with scope <strong>All scopes</strong> (must include Functions), paste the App Secret from Meta, then redeploy.
+        </p>
+      )}
       {fbStats.tokenWarning && <p className="admin-fb-note admin-fb-token-warning">{fbStats.tokenWarning}</p>}
 
       <section className="admin-card admin-fb-page-card">
