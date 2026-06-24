@@ -127,7 +127,7 @@ export async function fetchFbPageStats(event) {
     return {
       configured: false,
       setupHint:
-        "Set FACEBOOK_PAGE_ID, FACEBOOK_APP_ID, FACEBOOK_APP_SECRET, and FACEBOOK_USER_ACCESS_TOKEN in Netlify → Site settings → Environment variables.",
+        "Set FACEBOOK_PAGE_ID, FACEBOOK_APP_ID, FACEBOOK_APP_KEY, and FACEBOOK_USER_ACCESS_TOKEN in Netlify → Site settings → Environment variables.",
     };
   }
 

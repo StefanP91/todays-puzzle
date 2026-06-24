@@ -226,7 +226,7 @@ function FacebookDashboard({
         <ol className="admin-fb-setup-steps">
           <li>In Meta for Developers, open your app and add the <strong>Pages</strong> product.</li>
           <li>Generate a <strong>Page access token</strong> with <code>pages_read_engagement</code> and <code>read_insights</code>.</li>
-          <li>In Netlify → Environment variables, set <code>FACEBOOK_APP_ID</code>, <code>FACEBOOK_APP_SECRET</code>, <code>FACEBOOK_PAGE_ID</code>, and <code>FACEBOOK_USER_ACCESS_TOKEN</code> (User token from Graph API Explorer).</li>
+          <li>In Netlify → Environment variables, set <code>FACEBOOK_APP_ID</code>, <code>FACEBOOK_APP_KEY</code>, <code>FACEBOOK_PAGE_ID</code>, and <code>FACEBOOK_USER_ACCESS_TOKEN</code> (User token from Graph API Explorer).</li>
           <li>Redeploy the site and refresh this page.</li>
         </ol>
       </section>

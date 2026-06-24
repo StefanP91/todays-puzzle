@@ -5,7 +5,7 @@ const GRAPH_VERSION = "v21.0";
 const REFRESH_BUFFER_SEC = 24 * 60 * 60;
 
 function getAppSecret() {
-  return (process.env.FACEBOOK_APP_SECRET || "").trim();
+  return (process.env.FACEBOOK_APP_KEY || process.env.FACEBOOK_APP_SECRET || "").trim();
 }
 
 function getPageId() {
@@ -52,7 +52,7 @@ async function graphGet(path, params) {
 async function debugToken(inputToken) {
   const appToken = appAccessToken();
   if (!appToken) {
-    throw new Error("FACEBOOK_APP_SECRET is required for token refresh");
+    throw new Error("FACEBOOK_APP_KEY is required for token refresh");
   }
 
   const payload = await graphGet("debug_token", {
@@ -212,7 +212,7 @@ export async function refreshFbTokens(event, options = {}) {
     return {
       ok: false,
       reason: "missing_app_secret",
-      message: "Set FACEBOOK_APP_SECRET in Netlify for automatic token refresh.",
+      message: "Set FACEBOOK_APP_KEY in Netlify for automatic token refresh.",
     };
   }
 
