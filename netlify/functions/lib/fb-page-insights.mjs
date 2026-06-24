@@ -3,10 +3,11 @@ import { getPageAccessTokenWithRetry, getFbEnvDiagnostics, isFbTokenConfigured }
 const GRAPH_VERSION = "v21.0";
 
 const DAILY_METRICS = [
-  "page_views_total",
-  "page_impressions_unique",
-  "page_post_engagements",
-  "page_follows",
+  { key: "pageViews", metric: "page_views_total" },
+  // page_impressions_unique was deprecated by Meta; media viewers is the replacement for reach.
+  { key: "reach", metric: "page_total_media_view_unique" },
+  { key: "engagements", metric: "page_post_engagements" },
+  { key: "follows", metric: "page_follows" },
 ];
 
 function buildTokenWarning(tokenMeta) {
@@ -158,17 +159,14 @@ export async function fetchFbPageStats(event) {
   });
 
   const metricResults = await Promise.all(
-    DAILY_METRICS.map((metric) => fetchDailyMetric(pageId, token, metric, since, until)),
+    DAILY_METRICS.map(({ metric }) => fetchDailyMetric(pageId, token, metric, since, until)),
   );
 
-  const series = {
-    pageViews: metricResults[0].series,
-    reach: metricResults[1].series,
-    engagements: metricResults[2].series,
-    follows: metricResults[3].series,
-  };
+  const series = Object.fromEntries(
+    DAILY_METRICS.map(({ key }, index) => [key, metricResults[index].series]),
+  );
 
-  const metricErrors = DAILY_METRICS.map((metric, index) => {
+  const metricErrors = DAILY_METRICS.map(({ metric }, index) => {
     const result = metricResults[index];
     return result.error ? { metric, message: result.error } : null;
   }).filter(Boolean);

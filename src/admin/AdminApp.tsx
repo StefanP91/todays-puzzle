@@ -185,7 +185,7 @@ function FbMetricCards({
           <strong>{formatMetric(metrics.pageViews)}</strong>
         </div>
         <div className="admin-engagement-card">
-          <span className="admin-engagement-label">Reach</span>
+          <span className="admin-engagement-label">Media viewers</span>
           <strong>{formatMetric(metrics.reach)}</strong>
         </div>
         <div className="admin-engagement-card">
@@ -339,7 +339,7 @@ function FacebookDashboard({
           <DailyChart
             series={fbStats.dailyReach ?? []}
             unitLabel="person"
-            title="Daily reach — last 30 days"
+            title="Media viewers — last 30 days"
           />
         </section>
       )}
