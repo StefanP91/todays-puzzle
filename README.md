@@ -74,14 +74,19 @@ The admin panel has two tabs:
 
 ### Facebook Page analytics setup
 
-1. Go to [Meta for Developers](https://developers.facebook.com/) and open your app (same app as `VITE_FACEBOOK_APP_ID`).
-2. Add the **Pages** product if it is not already added.
-3. As a page admin, generate a **Page access token** with `pages_read_engagement` and `read_insights`.
-4. Find your **Page ID** (Page settings → About, or via Graph API Explorer).
-5. In Netlify → Site settings → Environment variables, set:
+Use a **Business** Meta app (with `pages_read_engagement` and `read_insights`) — it can differ from `VITE_FACEBOOK_APP_ID`.
+
+1. In [Graph API Explorer](https://developers.facebook.com/tools/explorer/), select your Business app and generate a **User access token** with `pages_show_list`, `pages_read_engagement`, and `read_insights`.
+2. Find your **Page ID** (Page settings → About, or `me/accounts` in the Explorer).
+3. In Netlify → Site settings → Environment variables, set:
+   - `FACEBOOK_APP_ID` — Business app ID
+   - `FACEBOOK_APP_SECRET` — from the same app (Settings → Basic)
    - `FACEBOOK_PAGE_ID`
-   - `FACEBOOK_PAGE_ACCESS_TOKEN` (long-lived token; keep secret)
-6. Redeploy, then open `/admin` → **Facebook Page**.
+   - `FACEBOOK_USER_ACCESS_TOKEN` — User token from step 1 (used to derive a Page token)
+   - `FACEBOOK_PAGE_ACCESS_TOKEN` — optional fallback until the first refresh
+4. Redeploy, then open `/admin` → **Facebook Page**.
+
+The site stores refreshed tokens in Netlify Blobs and re-fetches the Page token daily (`scheduled-refresh-fb-token`). The long-lived **User** token lasts ~60 days — paste a new one into `FACEBOOK_USER_ACCESS_TOKEN` before it expires (the admin panel warns when it is close).
 
 Facebook insights can lag by up to 48 hours. Live “who is viewing the page right now” is not available from Meta’s API.
 

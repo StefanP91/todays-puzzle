@@ -107,6 +107,13 @@ export interface FbPageStatsConfigured {
   dailyPageViews?: { date: string; total: number }[];
   dailyReach?: { date: string; total: number }[];
   metricErrors?: { metric: string; message: string }[];
+  tokenMeta?: {
+    refreshedAt: string | null;
+    pageExpiresAt: number | null;
+    userExpiresAt: number | null;
+    hasUserToken: boolean;
+  } | null;
+  tokenWarning?: string | null;
   note?: string;
   error?: string;
 }

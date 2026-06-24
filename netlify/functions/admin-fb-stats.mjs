@@ -15,7 +15,7 @@ export async function handler(event) {
   }
 
   try {
-    const stats = await fetchFbPageStats();
+    const stats = await fetchFbPageStats(event);
     return {
       statusCode: 200,
       headers: {

@@ -12,6 +12,9 @@
 [functions]
   included_files = ["netlify/functions/lib/fonts/**"]
 
+[functions."scheduled-refresh-fb-token"]
+  schedule = "0 5 * * *"
+
 [[redirects]]
   from = "/share"
   to = "/.netlify/functions/share"

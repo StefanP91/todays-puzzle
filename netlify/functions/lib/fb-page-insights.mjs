@@ -1,3 +1,5 @@
+import { getPageAccessTokenWithRetry, isFbTokenConfigured } from "./fb-token-refresh.mjs";
+
 const GRAPH_VERSION = "v21.0";
 
 const DAILY_METRICS = [
@@ -7,14 +9,14 @@ const DAILY_METRICS = [
   "page_follows",
 ];
 
-export function getFbPageConfig() {
-  const pageId = (process.env.FACEBOOK_PAGE_ID || "").trim();
-  const token = (process.env.FACEBOOK_PAGE_ACCESS_TOKEN || "").trim();
-  return {
-    pageId,
-    token,
-    configured: Boolean(pageId && token),
-  };
+function buildTokenWarning(tokenMeta) {
+  if (!tokenMeta?.userExpiresAt || tokenMeta.userExpiresAt === 0) return null;
+  const daysLeft = Math.floor((tokenMeta.userExpiresAt * 1000 - Date.now()) / (24 * 60 * 60 * 1000));
+  if (daysLeft > 14) return null;
+  if (daysLeft < 0) {
+    return "Facebook user token expired. Generate a new User access token in Graph API Explorer, set FACEBOOK_USER_ACCESS_TOKEN in Netlify, and redeploy.";
+  }
+  return `Facebook user token expires in ~${daysLeft} day${daysLeft === 1 ? "" : "s"}. Refresh FACEBOOK_USER_ACCESS_TOKEN in Netlify before it expires.`;
 }
 
 async function graphGet(path, params) {
@@ -120,13 +122,23 @@ function buildPeriodBlock(series, todayKey, monthStart) {
   };
 }
 
-export async function fetchFbPageStats() {
-  const { pageId, token, configured } = getFbPageConfig();
-  if (!configured) {
+export async function fetchFbPageStats(event) {
+  if (!isFbTokenConfigured()) {
     return {
       configured: false,
       setupHint:
-        "Set FACEBOOK_PAGE_ID and FACEBOOK_PAGE_ACCESS_TOKEN in Netlify → Site settings → Environment variables.",
+        "Set FACEBOOK_PAGE_ID, FACEBOOK_APP_ID, FACEBOOK_APP_SECRET, and FACEBOOK_USER_ACCESS_TOKEN in Netlify → Site settings → Environment variables.",
+    };
+  }
+
+  const { token, pageId, tokenMeta } = await getPageAccessTokenWithRetry(event);
+  if (!token || !pageId) {
+    return {
+      configured: true,
+      error:
+        "No valid Facebook Page access token. Set FACEBOOK_USER_ACCESS_TOKEN (User token from Graph API Explorer) and FACEBOOK_APP_SECRET, then redeploy.",
+      tokenMeta,
+      tokenWarning: buildTokenWarning(tokenMeta),
     };
   }
 
@@ -193,6 +205,8 @@ export async function fetchFbPageStats() {
     dailyPageViews: series.pageViews.slice(-30),
     dailyReach: series.reach.slice(-30),
     metricErrors,
+    tokenMeta,
+    tokenWarning: buildTokenWarning(tokenMeta),
     note:
       "Facebook insights can lag by up to 48 hours. Today's numbers may still be partial or zero.",
   };
