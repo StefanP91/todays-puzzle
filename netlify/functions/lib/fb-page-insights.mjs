@@ -131,13 +131,17 @@ export async function fetchFbPageStats(event) {
     };
   }
 
-  const { token, pageId, tokenMeta } = await getPageAccessTokenWithRetry(event);
+  const { token, pageId, tokenMeta, refreshResult } = await getPageAccessTokenWithRetry(event);
   if (!token || !pageId) {
+    const refreshMessage =
+      refreshResult && !refreshResult.ok && refreshResult.message
+        ? refreshResult.message
+        : "No valid Facebook Page access token.";
     return {
       configured: true,
-      error:
-        "No valid Facebook Page access token. Set FACEBOOK_USER_ACCESS_TOKEN (User token from Graph API Explorer) and FACEBOOK_APP_SECRET, then redeploy.",
+      error: refreshMessage,
       tokenMeta,
+      refreshResult,
       tokenWarning: buildTokenWarning(tokenMeta),
     };
   }

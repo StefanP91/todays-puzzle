@@ -1,4 +1,4 @@
-import { getFacebookAppId } from "./fb-app-id.mjs";
+import { getServerFacebookAppId } from "./fb-app-id.mjs";
 import { loadTokenBundle, saveTokenBundle } from "./fb-token-store.mjs";
 
 const GRAPH_VERSION = "v21.0";
@@ -21,7 +21,7 @@ function envPageToken() {
 }
 
 function appAccessToken() {
-  const appId = getFacebookAppId();
+  const appId = getServerFacebookAppId();
   const secret = getAppSecret();
   if (!appId || !secret) return null;
   return `${appId}|${secret}`;
@@ -62,9 +62,32 @@ async function debugToken(inputToken) {
   return payload.data;
 }
 
+async function validateAccessToken(token) {
+  try {
+    const debug = await debugToken(token);
+    if (!debug.is_valid) {
+      return { valid: false, reason: "debug_invalid", expiresAt: debug.expires_at ?? null };
+    }
+    if (isTokenExpired(debug.expires_at)) {
+      return { valid: false, reason: "debug_expired", expiresAt: debug.expires_at ?? null };
+    }
+    return { valid: true, expiresAt: debug.expires_at ?? 0 };
+  } catch (error) {
+    return {
+      valid: false,
+      reason: "debug_failed",
+      message: error instanceof Error ? error.message : "Token validation failed",
+    };
+  }
+}
+
 async function exchangeLongLivedUserToken(shortToken) {
-  const appId = getFacebookAppId();
+  const appId = getServerFacebookAppId();
   const secret = getAppSecret();
+  if (!appId) {
+    throw new Error("FACEBOOK_APP_ID must be set to your Business app ID for token refresh");
+  }
+
   const data = await graphGet("oauth/access_token", {
     grant_type: "fb_exchange_token",
     client_id: appId,
@@ -114,16 +137,14 @@ function isSessionExpiredError(error) {
 async function ensureUserToken(bundle, event) {
   const userFromEnv = envUserToken();
 
-  if (bundle.userAccessToken && !isTokenExpired(bundle.userExpiresAt)) {
-    try {
-      const debug = await debugToken(bundle.userAccessToken);
-      if (debug.is_valid && !isTokenExpired(debug.expires_at, 7 * 24 * 60 * 60)) {
-        bundle.userExpiresAt = debug.expires_at ?? bundle.userExpiresAt;
-        return bundle;
-      }
-    } catch {
-      // fall through to env/bootstrap
+  if (bundle.userAccessToken) {
+    const validation = await validateAccessToken(bundle.userAccessToken);
+    if (validation.valid && !isTokenExpired(validation.expiresAt, 7 * 24 * 60 * 60)) {
+      bundle.userExpiresAt = validation.expiresAt ?? bundle.userExpiresAt;
+      return bundle;
     }
+    bundle.userAccessToken = null;
+    bundle.userExpiresAt = null;
   }
 
   if (!userFromEnv) {
@@ -144,10 +165,25 @@ async function refreshPageToken(bundle, event) {
 
   bundle.pageAccessToken = await fetchPageAccessToken(bundle.userAccessToken, bundle.pageId);
   const pageDebug = await debugToken(bundle.pageAccessToken);
+  if (!pageDebug.is_valid) {
+    return { ok: false, reason: "invalid_page_token", message: "Fetched Page token is not valid" };
+  }
+
   bundle.pageExpiresAt = pageDebug.expires_at ?? 0;
   bundle.refreshedAt = new Date().toISOString();
   await saveTokenBundle(event, bundle);
   return { ok: true, source: "refreshed_page", refreshedAt: bundle.refreshedAt };
+}
+
+async function isCachedPageTokenUsable(bundle) {
+  if (!bundle.pageAccessToken) return false;
+  if (isTokenExpired(bundle.pageExpiresAt, REFRESH_BUFFER_SEC)) return false;
+
+  const validation = await validateAccessToken(bundle.pageAccessToken);
+  if (!validation.valid) return false;
+
+  bundle.pageExpiresAt = validation.expiresAt ?? bundle.pageExpiresAt;
+  return true;
 }
 
 /**
@@ -157,11 +193,19 @@ async function refreshPageToken(bundle, event) {
  */
 export async function refreshFbTokens(event, options = {}) {
   const pageId = getPageId();
-  const appId = getFacebookAppId();
+  const appId = getServerFacebookAppId();
   const appSecret = getAppSecret();
 
-  if (!pageId || !appId) {
-    return { ok: false, reason: "missing_page_or_app_id" };
+  if (!pageId) {
+    return { ok: false, reason: "missing_page_id" };
+  }
+
+  if (!appId) {
+    return {
+      ok: false,
+      reason: "missing_app_id",
+      message: "Set FACEBOOK_APP_ID to your Business app ID (Today's Puzzle F Page).",
+    };
   }
 
   if (!appSecret) {
@@ -177,42 +221,44 @@ export async function refreshFbTokens(event, options = {}) {
     bundle = emptyBundle(pageId);
   }
 
-  const pageValid =
-    bundle.pageAccessToken && !isTokenExpired(bundle.pageExpiresAt, REFRESH_BUFFER_SEC);
+  const hasEnvUserToken = Boolean(envUserToken());
+  const pageUsable = !options.force && (await isCachedPageTokenUsable(bundle));
 
-  if (pageValid && !options.force) {
+  if (pageUsable && !hasEnvUserToken) {
+    await saveTokenBundle(event, bundle);
     return { ok: true, source: "cached", refreshedAt: bundle.refreshedAt };
   }
 
-  bundle = await ensureUserToken(bundle, event);
+  try {
+    bundle = await ensureUserToken(bundle, event);
+  } catch (error) {
+    return {
+      ok: false,
+      reason: "user_exchange_failed",
+      message: error instanceof Error ? error.message : "Failed to exchange user token",
+    };
+  }
 
   if (!bundle.userAccessToken) {
-    const fallback = envPageToken();
-    if (fallback) {
-      bundle.pageAccessToken = fallback;
-      try {
-        const debug = await debugToken(fallback);
-        bundle.pageExpiresAt = debug.expires_at ?? null;
-        bundle.refreshedAt = new Date().toISOString();
-        await saveTokenBundle(event, bundle);
-      } catch {
-        await saveTokenBundle(event, bundle);
+    if (!hasEnvUserToken) {
+      const fallback = envPageToken();
+      if (fallback) {
+        const validation = await validateAccessToken(fallback);
+        if (validation.valid) {
+          bundle.pageAccessToken = fallback;
+          bundle.pageExpiresAt = validation.expiresAt ?? null;
+          bundle.refreshedAt = new Date().toISOString();
+          await saveTokenBundle(event, bundle);
+          return { ok: true, source: "env_page_only", refreshedAt: bundle.refreshedAt };
+        }
       }
-
-      return {
-        ok: true,
-        source: "env_page_only",
-        warning:
-          "Add FACEBOOK_USER_ACCESS_TOKEN (User token from Graph API Explorer) for automatic refresh.",
-        refreshedAt: bundle.refreshedAt,
-      };
     }
 
     return {
       ok: false,
       reason: "no_user_token",
       message:
-        "Set FACEBOOK_USER_ACCESS_TOKEN in Netlify (generate a User access token in Graph API Explorer).",
+        "Set FACEBOOK_USER_ACCESS_TOKEN in Netlify (User access token from Graph API Explorer, not a Page token).",
     };
   }
 
@@ -233,38 +279,56 @@ export async function refreshFbTokens(event, options = {}) {
 export async function getPageAccessToken(event) {
   const pageId = getPageId();
   if (!pageId) {
-    return { token: null, pageId: "", tokenMeta: null };
+    return { token: null, pageId: "", tokenMeta: null, refreshResult: null };
   }
 
-  await refreshFbTokens(event);
+  const refreshResult = await refreshFbTokens(event);
+  const bundle = await loadTokenBundle(event);
 
-  let bundle = await loadTokenBundle(event);
-  let token = bundle?.pageAccessToken || envPageToken() || null;
+  if (!refreshResult.ok) {
+    return {
+      token: null,
+      pageId,
+      tokenMeta: bundle
+        ? {
+            refreshedAt: bundle.refreshedAt,
+            pageExpiresAt: bundle.pageExpiresAt,
+            userExpiresAt: bundle.userExpiresAt,
+            hasUserToken: Boolean(bundle.userAccessToken),
+          }
+        : null,
+      refreshResult,
+    };
+  }
 
-  if (token && bundle?.pageAccessToken && isTokenExpired(bundle.pageExpiresAt)) {
-    const retry = await refreshFbTokens(event, { force: true });
-    if (retry.ok) {
-      bundle = await loadTokenBundle(event);
-      token = bundle?.pageAccessToken || token;
-    }
+  const token = bundle?.pageAccessToken || null;
+  if (!token) {
+    return {
+      token: null,
+      pageId,
+      tokenMeta: null,
+      refreshResult: { ok: false, reason: "no_page_token", message: "No page token available after refresh" },
+    };
   }
 
   return {
     token,
     pageId,
-    tokenMeta: bundle
-      ? {
-          refreshedAt: bundle.refreshedAt,
-          pageExpiresAt: bundle.pageExpiresAt,
-          userExpiresAt: bundle.userExpiresAt,
-          hasUserToken: Boolean(bundle.userAccessToken),
-        }
-      : null,
+    tokenMeta: {
+      refreshedAt: bundle.refreshedAt,
+      pageExpiresAt: bundle.pageExpiresAt,
+      userExpiresAt: bundle.userExpiresAt,
+      hasUserToken: Boolean(bundle.userAccessToken),
+    },
+    refreshResult,
   };
 }
 
 export function isFbTokenConfigured() {
-  return Boolean(getPageId() && (getFacebookAppId() || envPageToken() || envUserToken()));
+  return Boolean(
+    getPageId() &&
+      (getServerFacebookAppId() || envPageToken() || envUserToken()),
+  );
 }
 
 /** @param {import("@netlify/blobs").NetlifyFunctionEvent} event */
@@ -273,14 +337,20 @@ export async function getPageAccessTokenWithRetry(event) {
   if (!first.token) return first;
 
   try {
-    const pageId = first.pageId;
-    await graphGet(pageId, { fields: "name", access_token: first.token });
+    await graphGet(first.pageId, { fields: "name", access_token: first.token });
     return first;
   } catch (error) {
     if (!isSessionExpiredError(error)) throw error;
 
     const refresh = await refreshFbTokens(event, { force: true });
-    if (!refresh.ok) throw error;
+    if (!refresh.ok) {
+      return {
+        token: null,
+        pageId: first.pageId,
+        tokenMeta: first.tokenMeta,
+        refreshResult: refresh,
+      };
+    }
 
     return getPageAccessToken(event);
   }

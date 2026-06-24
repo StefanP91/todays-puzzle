@@ -114,6 +114,7 @@ export interface FbPageStatsConfigured {
     hasUserToken: boolean;
   } | null;
   tokenWarning?: string | null;
+  refreshResult?: { ok: boolean; reason?: string; message?: string; source?: string } | null;
   note?: string;
   error?: string;
 }
