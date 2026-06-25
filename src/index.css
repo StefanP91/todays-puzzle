@@ -213,14 +213,14 @@ body {
     border-radius: 0.75rem;
     background: rgba(56, 132, 198, 0.12);
     border: 1px solid rgba(96, 165, 250, 0.22);
-    padding: 0.75rem 1rem;
+    padding: 1.1rem 1.2rem;
     width: 100%;
     max-width: 24rem;
   }
 
   .game-info-box--outside {
     flex-shrink: 0;
-    margin: 0;
+    margin: 0.25rem 0 0;
   }
 
   .game-info-box--training {
@@ -429,21 +429,21 @@ body {
 .top-bar {
   position: fixed;
   top: calc(0.5rem + var(--safe-top));
-  left: 50%;
-  right: auto;
+  left: 0;
+  right: 0;
   z-index: 50;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.2rem;
-  width: auto;
+  width: fit-content;
   max-width: calc(100% - 1.25rem);
+  margin-inline: auto;
   padding: 0.35rem 0.45rem;
   border-radius: 9999px;
   background: rgba(22, 33, 62, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-  transform: translateX(-50%);
   pointer-events: auto;
 }
 
@@ -501,8 +501,9 @@ body {
     top: calc(1rem + var(--safe-top));
     left: calc(1rem + var(--safe-left));
     right: calc(1rem + var(--safe-right));
-    transform: none;
+    width: auto;
     max-width: none;
+    margin-inline: 0;
     padding: 0;
     border-radius: 0;
     background: transparent;
@@ -1278,6 +1279,8 @@ body {
 .account-modal {
   position: relative;
   width: min(100%, 24rem);
+  max-width: calc(100vw - 2rem);
+  box-sizing: border-box;
   padding: 1.25rem 1.1rem 1.1rem;
   border-radius: 1rem;
   background: #1f2937;
@@ -1414,6 +1417,8 @@ body {
 .auth-modal {
   position: relative;
   width: min(100%, 22rem);
+  max-width: calc(100vw - 2rem);
+  box-sizing: border-box;
   padding: 1.5rem 1.25rem 1.25rem;
   border-radius: 1rem;
   background: #1f2937;

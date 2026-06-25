@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import AccountPanel from "./AccountPanel";
 import type { ComponentProps } from "react";
 
@@ -7,7 +8,7 @@ type AccountModalProps = ComponentProps<typeof AccountPanel> & {
 };
 
 export default function AccountModal({ closeLabel, onClose, ...panelProps }: AccountModalProps) {
-  return (
+  return createPortal(
     <div className="auth-overlay" role="presentation" onClick={onClose}>
       <div
         className="account-modal"
@@ -21,6 +22,7 @@ export default function AccountModal({ closeLabel, onClose, ...panelProps }: Acc
         </button>
         <AccountPanel {...panelProps} titleId="account-modal-title" />
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

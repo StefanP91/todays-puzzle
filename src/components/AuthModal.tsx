@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import type { AuthContent } from "../lib/authContent";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -53,7 +54,7 @@ export default function AuthModal({ content, closeLabel, onClose }: AuthModalPro
     }
   }
 
-  return (
+  return createPortal(
     <div className="auth-overlay" role="presentation" onClick={onClose}>
       <div
         className="auth-modal"
@@ -126,6 +127,7 @@ export default function AuthModal({ content, closeLabel, onClose }: AuthModalPro
           {mode === "login" ? content.switchRegister : content.switchLogin}
         </button>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
