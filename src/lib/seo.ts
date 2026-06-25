@@ -131,5 +131,8 @@ export function buildJsonLd(lang: GameLangCode, origin: string) {
     })),
   };
 
-  return [webApp, faqPage];
+  return {
+    "@context": "https://schema.org",
+    "@graph": [webApp, faqPage],
+  };
 }

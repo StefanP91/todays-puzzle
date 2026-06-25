@@ -4,51 +4,51 @@ import { VALID_LANGS } from "./share-content.mjs";
 import { getSiteMeta } from "./site-meta.mjs";
 
 const SEO_TITLE = {
-  mk: "Денешна Загатка — Wordle на македонски",
-  en: "Today's Puzzle — Daily Wordle Game",
-  sr: "Данашња Загонетка — Wordle на српском",
-  hr: "Današnja zagonetka — Wordle na hrvatskom",
-  bs: "Današnja zagonetka — Wordle na bosanskom",
-  sl: "Dnevna uganka — Wordle v slovenščini",
-  sq: "Enigma e ditës — Wordle në shqip",
-  bg: "Дневна загадка — Wordle на български",
-  el: "Ημερήσιο παζλ — Wordle στα ελληνικά",
-  ro: "Puzzle zilnic — Wordle în română",
-  de: "Tägliches Rätsel — Wordle auf Deutsch",
-  fr: "Puzzle du jour — Wordle en français",
-  es: "Puzzle diario — Wordle en español",
-  it: "Puzzle del giorno — Wordle in italiano",
-  pt: "Puzzle diário — Wordle em português",
-  nl: "Dagelijkse puzzel — Wordle in het Nederlands",
-  pl: "Codzienna zagadka — Wordle po polsku",
-  cs: "Denní hádanka — Wordle v češtině",
-  sv: "Dagligt pussel — Wordle på svenska",
-  hu: "Napi rejtvény — Wordle magyarul",
-  uk: "Щоденна загадка — Wordle українською",
+  mk: "Денешна Загатка — Бесплатен Wordle на македонски",
+  en: "Today's Puzzle — Free Daily Wordle | 21 Languages",
+  sr: "Данашња Загонетка — Бесплатан Wordle на српском",
+  hr: "Današnja Zagonetka — Besplatan Wordle na hrvatskom",
+  bs: "Današnja Zagonetka — Besplatan Wordle na bosanskom",
+  sl: "Dnevna Uganka — Brezplačen Wordle v slovenščini",
+  sq: "Enigma e Ditës — Wordle Falas në Shqip",
+  bg: "Дневна Загадка — Безплатен Wordle на български",
+  el: "Ημερήσιο Παζλ — Δωρεάν Wordle στα Ελληνικά",
+  ro: "Puzzle Zilnic — Wordle Gratuit în Română",
+  de: "Tägliches Worträtsel — Kostenloses Wordle auf Deutsch",
+  fr: "Puzzle du Jour — Wordle Gratuit en Français",
+  es: "Puzzle Diario — Wordle Gratis en Español",
+  it: "Puzzle del Giorno — Wordle Gratis in Italiano",
+  pt: "Puzzle Diário — Wordle Grátis em Português",
+  nl: "Dagelijkse Puzzel — Gratis Wordle in het Nederlands",
+  pl: "Codzienna Zagadka — Darmowy Wordle po Polsku",
+  cs: "Denní Hádanka — Bezplatný Wordle v Češtině",
+  sv: "Dagligt Pussel — Gratis Wordle på Svenska",
+  hu: "Napi Rejtvény — Ingyenes Wordle Magyarul",
+  uk: "Щоденна Загадка — Безкоштовний Wordle українською",
 };
 
 const SEO_DESCRIPTION = {
-  mk: "Бесплатна дневна загатка на македонски — погоди го зборот за 6 обиди. Wordle на македонски, секој ден нова загатка!",
-  en: "Free daily five-letter word puzzle. Guess today's word in six tries — a Wordle-style game in 21 languages.",
-  sr: "Бесплатна дневна загонетка на српском — погоди реч за 6 покушаја. Wordle на српском, сваки дан нова загонетка!",
-  hr: "Besplatna dnevna zagonetka na hrvatskom — pogodi riječ za 6 pokušaja. Wordle na hrvatskom, svaki dan nova zagonetka!",
-  bs: "Besplatna dnevna zagonetka na bosanskom — pogodi riječ za 6 pokušaja. Wordle na bosanskom, svaki dan nova zagonetka!",
-  sl: "Brezplačna dnevna uganka — ugani besedo v 6 poskusih. Wordle v slovenščini, vsak dan nova uganka!",
-  sq: "Enigmë falas çdo ditë në shqip — gjej fjalën në 6 prova. Wordle në shqip, çdo ditë enigmë e re!",
-  bg: "Безплатна дневна загадка на български — отгадай думата за 6 опита. Wordle на български, всеки ден нова загадка!",
-  el: "Δωρεάν καθημερινό παζλ λέξης — βρες τη λέξη σε 6 προσπάθειες. Wordle στα ελληνικά, νέο παζλ κάθε μέρα!",
-  ro: "Puzzle zilnic gratuit în română — ghicește cuvântul în 6 încercări. Wordle în română, puzzle nou în fiecare zi!",
-  de: "Kostenloses tägliches Worträtsel — errate das Wort in 6 Versuchen. Wordle auf Deutsch, jeden Tag ein neues Rätsel!",
-  fr: "Jeu de mots quotidien gratuit — devine le mot en 6 essais. Wordle en français, nouveau puzzle chaque jour !",
-  es: "Puzzle de palabras diario gratis — adivina la palabra en 6 intentos. Wordle en español, ¡nuevo puzzle cada día!",
-  it: "Puzzle di parole quotidiano gratuito — indovina la parola in 6 tentativi. Wordle in italiano, nuovo puzzle ogni giorno!",
-  pt: "Puzzle de palavras diário grátis — adivinha a palavra em 6 tentativas. Wordle em português, novo puzzle todos os dias!",
-  nl: "Gratis dagelijks woordpuzzel — raad het woord in 6 pogingen. Wordle in het Nederlands, elke dag een nieuwe puzzel!",
-  pl: "Darmowa codzienna zagadka słowna — zgadnij słowo w 6 próbach. Wordle po polsku, nowa zagadka każdego dnia!",
-  cs: "Bezplatná denní slovní hádanka — uhodni slovo za 6 pokusů. Wordle v češtině, každý den nová hádanka!",
-  sv: "Gratis dagligt ordspel — gissa ordet på 6 försök. Wordle på svenska, nytt pussel varje dag!",
-  hu: "Ingyenes napi szójáték — találd ki a szót 6 próbálkozás alatt. Wordle magyarul, minden nap új rejtvény!",
-  uk: "Безкоштовна щоденна загадка — вгадай слово за 6 спроб. Wordle українською, нова загадка щодня!",
+  mk: "Погоди го денешниот збор од 5 букви за 6 обиди. Бесплатна дневна загатка на македонски — Wordle на македонски, нов збор секој ден, без регистрација.",
+  en: "Guess today's five-letter word in six tries. Free daily Wordle-style puzzle — play in 21 languages including Macedonian, Serbian, German, and Spanish.",
+  sr: "Погоди данашњу реч од 5 слова за 6 покушаја. Бесплатна дневна загонетка на српском — Wordle на српском, нова реч сваког дана, без пријаве.",
+  hr: "Pogodi današnju riječ od 5 slova u 6 pokušaja. Besplatna dnevna zagonetka na hrvatskom — Wordle na hrvatskom, nova riječ svaki dan, bez registracije.",
+  bs: "Pogodi današnju riječ od 5 slova u 6 pokušaja. Besplatna dnevna zagonetka na bosanskom — Wordle na bosanskom, nova riječ svaki dan, bez registracije.",
+  sl: "Ugani današnjo besedo s 5 črkami v 6 poskusih. Brezplačna dnevna uganka — Wordle v slovenščini, nova beseda vsak dan, brez registracije.",
+  sq: "Gjej fjalën e sotme me 5 shkronja në 6 prova. Enigmë falas çdo ditë në shqip — Wordle në shqip, fjalë e re çdo ditë, pa regjistrim.",
+  bg: "Отгадай днешната дума от 5 букви за 6 опита. Безплатна дневна загадка на български — Wordle на български, нова дума всеки ден, без регистрация.",
+  el: "Βρες τη σημερινή λέξη 5 γραμμάτων σε 6 προσπάθειες. Δωρεάν καθημερινό παζλ λέξης — Wordle στα ελληνικά, νέα λέξη κάθε μέρα, χωρίς εγγραφή.",
+  ro: "Ghicește cuvântul de azi din 5 litere în 6 încercări. Puzzle zilnic gratuit în română — Wordle în română, cuvânt nou în fiecare zi, fără cont.",
+  de: "Errate das heutige 5-Buchstaben-Wort in 6 Versuchen. Kostenloses tägliches Worträtsel — Wordle auf Deutsch, jeden Tag ein neues Rätsel, ohne Anmeldung.",
+  fr: "Devine le mot du jour de 5 lettres en 6 essais. Jeu de mots quotidien gratuit — Wordle en français, nouveau mot chaque jour, sans inscription.",
+  es: "Adivina la palabra de hoy de 5 letras en 6 intentos. Puzzle de palabras diario gratis — Wordle en español, palabra nueva cada día, sin registro.",
+  it: "Indovina la parola di oggi da 5 lettere in 6 tentativi. Puzzle di parole quotidiano gratuito — Wordle in italiano, nuova parola ogni giorno, senza account.",
+  pt: "Adivinha a palavra de hoje com 5 letras em 6 tentativas. Puzzle de palavras diário grátis — Wordle em português, palavra nova todos os dias, sem registo.",
+  nl: "Raad het woord van vandaag van 5 letters in 6 pogingen. Gratis dagelijks woordpuzzel — Wordle in het Nederlands, elke dag een nieuw woord, zonder account.",
+  pl: "Zgadnij dzisiejsze słowo z 5 liter w 6 próbach. Darmowa codzienna zagadka słowna — Wordle po polsku, nowe słowo każdego dnia, bez rejestracji.",
+  cs: "Uhodni dnešní slovo z 5 písmen za 6 pokusů. Bezplatná denní slovní hádanka — Wordle v češtině, každý den nové slovo, bez registrace.",
+  sv: "Gissa dagens ord med 5 bokstäver på 6 försök. Gratis dagligt ordspel — Wordle på svenska, nytt ord varje dag, utan registrering.",
+  hu: "Találd ki a mai 5 betűs szót 6 próbálkozás alatt. Ingyenes napi szójáték — Wordle magyarul, minden nap új szó, regisztráció nélkül.",
+  uk: "Вгадай сьогоднішнє слово з 5 літер за 6 спроб. Безкоштовна щоденна загадка — Wordle українською, нове слово щодня, без реєстрації.",
 };
 
 function pageUrlForLang(origin, lang) {
@@ -69,6 +69,10 @@ function hreflangLinks(origin, activeLang, escapeAttr) {
   return lines.join("\n");
 }
 
+function safeJsonLd(data) {
+  return JSON.stringify(data).replace(/</g, "\\u003c");
+}
+
 export function buildSeoHead({ origin, lang, escapeAttr }) {
   const meta = getSiteMeta(lang);
   const seoTitle = SEO_TITLE[meta.lang] || meta.title;
@@ -79,21 +83,19 @@ export function buildSeoHead({ origin, lang, escapeAttr }) {
   const title = escapeAttr(seoTitle);
   const description = escapeAttr(seoDescription);
 
-  const jsonLd = escapeAttr(
-    JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      name: seoTitle,
-      description: seoDescription,
-      url: pageUrl,
-      applicationCategory: "GameApplication",
-      operatingSystem: "Any",
-      browserRequirements: "Requires JavaScript",
-      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-      inLanguage: meta.htmlLang,
-      image: imageUrl,
-    }),
-  );
+  const jsonLd = safeJsonLd({
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: seoTitle,
+    description: seoDescription,
+    url: pageUrl,
+    applicationCategory: "GameApplication",
+    operatingSystem: "Any",
+    browserRequirements: "Requires JavaScript",
+    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    inLanguage: meta.htmlLang,
+    image: imageUrl,
+  });
 
   return `  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />

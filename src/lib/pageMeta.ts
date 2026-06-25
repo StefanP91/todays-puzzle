@@ -88,7 +88,7 @@ function setJsonLd(lang: GameLangCode, origin: string): void {
     el.type = "application/ld+json";
     document.head.appendChild(el);
   }
-  el.textContent = JSON.stringify(buildJsonLd(lang, origin));
+  el.textContent = JSON.stringify(buildJsonLd(lang, origin)).replace(/</g, "\\u003c");
 }
 
 function syncLangInUrl(lang: GameLangCode): string {
