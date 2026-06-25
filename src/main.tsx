@@ -4,6 +4,7 @@ import App from "./App";
 import "./index.css";
 
 import { applyAdminNoIndex } from "./lib/pageMeta";
+import { AuthProvider } from "./contexts/AuthContext";
 
 const AdminApp = lazy(() => import("./admin/AdminApp"));
 
@@ -30,7 +31,9 @@ createRoot(document.getElementById("root")!).render(
         <AdminApp />
       </Suspense>
     ) : (
-      <App />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     )}
   </StrictMode>,
 );

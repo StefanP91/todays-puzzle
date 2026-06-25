@@ -41,6 +41,7 @@ coverage/
 # Local screenshots / marketing assets (not for repo)
 live*.png
 admin-credentials.txt
+facebook-groups.txt
 public/promo/
 
 # Promo image generators (local tooling)

@@ -48,6 +48,13 @@ function getFont(bold = false) {
   return bold ? getBoldFont() : getRegularFont();
 }
 
+const RENDER_OPTIONS = { kerning: true, features: { liga: false, rlig: false, ccmp: false } };
+
+function hasDrawablePath(path) {
+  if (!path?.commands?.length) return false;
+  return path.commands.some((cmd) => cmd.type !== "M" && cmd.type !== "Z");
+}
+
 function measureText(text, fontSize, bold = false) {
   const font = getFont(bold);
   const scale = fontSize / font.unitsPerEm;
@@ -62,13 +69,22 @@ function textToPaths(text, x, yTop, fontSize, fill, bold = false) {
   const font = getFont(bold);
   const scale = fontSize / font.unitsPerEm;
   const baseline = yTop + font.ascender * scale;
+
+  try {
+    const path = font.getPath(text, x, baseline, fontSize, RENDER_OPTIONS);
+    if (hasDrawablePath(path)) {
+      return `<path d="${path.toPathData(2)}" fill="${fill}"/>`;
+    }
+  } catch {
+    // Fall back to per-glyph rendering for scripts with unsupported GSUB rules.
+  }
+
   let cursor = x;
   let paths = "";
-
   for (const char of text) {
     const glyph = font.charToGlyph(char);
     const path = glyph.getPath(cursor, baseline, fontSize);
-    if (path.commands?.length) {
+    if (hasDrawablePath(path)) {
       paths += `<path d="${path.toPathData(2)}" fill="${fill}"/>`;
     }
     cursor += glyph.advanceWidth * scale;

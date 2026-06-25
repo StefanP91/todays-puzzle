@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import AuthButton from "./components/AuthButton";
 import BestTipsSection from "./components/BestTipsSection";
 import Board from "./components/Board";
 import CompletedBanner from "./components/CompletedBanner";
@@ -9,6 +10,8 @@ import ResultModal from "./components/ResultModal";
 import StatsModal from "./components/StatsModal";
 import TrainingBanner from "./components/TrainingBanner";
 import { buildShareText, evaluateGuess, isValidWord, mergeKeyboardState } from "./lib/game";
+import { getAuthContent } from "./lib/authContent";
+import { useAuth } from "./contexts/AuthContext";
 import { getKeyboardRows } from "./lib/gameConfig";
 import { getGameContent } from "./lib/gameContent";
 import { getTodayKey, getPuzzleNumber } from "./lib/daily";
@@ -64,6 +67,7 @@ function keyboardFromGuesses(guesses: Cell[][]): Record<string, LetterState> {
 
 export default function App() {
   const initialLang = resolveInitialGameLanguage();
+  const { user, syncStatsForLang } = useAuth();
 
   const [dictReady, setDictReady] = useState(false);
   const [gameLang, setGameLang] = useState<GameLangCode>(initialLang);
@@ -87,6 +91,7 @@ export default function App() {
   const gameRef = useRef<HTMLDivElement>(null);
 
   const gameContent = useMemo(() => getGameContent(gameLang), [gameLang]);
+  const authContent = useMemo(() => getAuthContent(gameLang), [gameLang]);
   const siteContent = useMemo(() => getSiteContent(gameLang), [gameLang]);
   const keyboardRows = useMemo(() => getKeyboardRows(gameLang), [gameLang]);
   const allKeys = useMemo(() => new Set(keyboardRows.flat()), [keyboardRows]);
@@ -100,6 +105,23 @@ export default function App() {
   useEffect(() => {
     trackVisitOnce();
   }, []);
+
+  useEffect(() => {
+    const onSynced = () => setStats(loadStats(gameLang));
+    window.addEventListener("puzzle-stats-synced", onSynced);
+    return () => window.removeEventListener("puzzle-stats-synced", onSynced);
+  }, [gameLang]);
+
+  const persistStats = useCallback(
+    (won: boolean, guessCount: number) => {
+      const next = updateStatsOnComplete(won, guessCount, gameLang);
+      setStats(next);
+      setStatsUpdated(true);
+      if (user) void syncStatsForLang(gameLang, next);
+      return next;
+    },
+    [gameLang, user, syncStatsForLang],
+  );
 
   const resetBoard = useCallback(() => {
     const blank = emptyBoard();
@@ -299,8 +321,7 @@ export default function App() {
       if (mode === "daily") {
         setShowResult(true);
         if (!statsUpdated) {
-          setStats(updateStatsOnComplete(true, newGuesses.length, gameLang));
-          setStatsUpdated(true);
+          persistStats(true, newGuesses.length);
         }
       }
       return;
@@ -318,8 +339,7 @@ export default function App() {
       if (mode === "daily") {
         setShowResult(true);
         if (!statsUpdated) {
-          setStats(updateStatsOnComplete(false, 0, gameLang));
-          setStatsUpdated(true);
+          persistStats(false, 0);
         }
       }
     }
@@ -332,6 +352,7 @@ export default function App() {
     statsUpdated,
     mode,
     gameLang,
+    persistStats,
     gameContent.notEnoughLetters,
     gameContent.unknownWord,
   ]);
@@ -490,14 +511,17 @@ export default function App() {
                   : `#${puzzleNumber}`}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={showHintClue}
-              className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-white/10 active:bg-white/15 transition text-lg touch-manipulation"
-              aria-label={gameContent.hintAria}
-            >
-              💡
-            </button>
+            <div className="flex items-center gap-0.5 shrink-0">
+              <AuthButton content={authContent} closeLabel={gameContent.close} />
+              <button
+                type="button"
+                onClick={showHintClue}
+                className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-white/10 active:bg-white/15 transition text-lg touch-manipulation"
+                aria-label={gameContent.hintAria}
+              >
+                💡
+              </button>
+            </div>
           </header>
 
           <main className="game-main">
