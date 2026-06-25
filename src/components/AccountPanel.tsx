@@ -9,6 +9,7 @@ interface AccountPanelProps {
   authContent: AuthContent;
   gameContent: GameContent;
   onLogout: () => void;
+  titleId?: string;
 }
 
 function displayName(user: User): string | null {
@@ -23,6 +24,7 @@ export default function AccountPanel({
   authContent,
   gameContent,
   onLogout,
+  titleId = "account-panel-title",
 }: AccountPanelProps) {
   const winRate = stats.played > 0 ? Math.round((stats.won / stats.played) * 100) : 0;
   const name = displayName(user);
@@ -37,7 +39,7 @@ export default function AccountPanel({
   return (
     <div className="account-panel">
       <div className="account-panel__head">
-        <h3 className="account-panel__title">{authContent.accountTitle}</h3>
+        <h3 id={titleId} className="account-panel__title">{authContent.accountTitle}</h3>
         <button type="button" className="account-panel__logout" onClick={onLogout}>
           {authContent.logout}
         </button>

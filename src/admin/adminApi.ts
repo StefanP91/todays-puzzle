@@ -141,6 +141,60 @@ export async function fetchFbPageStats(): Promise<FbPageStats> {
   return parseJson<FbPageStats>(response);
 }
 
+export interface AdminUserRow {
+  id: string;
+  email: string;
+  name: string | null;
+  provider: string;
+  createdAt: string | null;
+  lastSignInAt: string | null;
+}
+
+export interface AdminUsersConfigured {
+  configured: true;
+  totalUsers: number;
+  newToday: number;
+  newThisMonth: number;
+  signedInToday: number;
+  signedInThisMonth: number;
+  usersWithSyncedStats: number;
+  totalGamesPlayed: number;
+  totalGamesWon: number;
+  recentUsers: AdminUserRow[];
+  error?: string;
+}
+
+export interface AdminUsersUnconfigured {
+  configured: false;
+  setupHint: string;
+}
+
+export type AdminUsersStats = AdminUsersConfigured | AdminUsersUnconfigured;
+
+export async function fetchAdminUsers(): Promise<AdminUsersStats> {
+  const response = await fetch("/api/admin/users", {
+    credentials: "include",
+    cache: "no-store",
+  });
+  return parseJson<AdminUsersStats>(response);
+}
+
+export function formatDateTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleString("en-GB", {
+      timeZone: "Europe/Skopje",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return iso;
+  }
+}
+
 const countryNames = new Intl.DisplayNames(["en"], { type: "region" });
 
 export function countryLabel(code: string): string {

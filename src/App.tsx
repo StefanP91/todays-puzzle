@@ -448,7 +448,12 @@ export default function App() {
 
       <div className="app-page">
         <div className="top-actions">
-          <AuthTopButton authContent={authContent} closeLabel={gameContent.close} />
+          <AuthTopButton
+            authContent={authContent}
+            gameContent={gameContent}
+            stats={stats}
+            closeLabel={gameContent.close}
+          />
           <button
             type="button"
             className="top-lang-btn"
@@ -583,9 +588,6 @@ export default function App() {
             content={siteContent}
             activeCode={gameLang}
             onSelect={handleLanguageSelect}
-            authContent={authContent}
-            gameContent={gameContent}
-            stats={stats}
           />
           <BestTipsSection content={siteContent} />
           <FaqSection content={siteContent} />

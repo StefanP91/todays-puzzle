@@ -1120,8 +1120,35 @@ body {
   color: #92400e;
 }
 
+.admin-user-email {
+  font-size: 0.82rem;
+  color: #6b7280;
+  word-break: break-all;
+}
+
 /* Optional Supabase auth */
 .account-panel {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.account-modal {
+  position: relative;
+  width: min(100%, 24rem);
+  padding: 1.25rem 1.1rem 1.1rem;
+  border-radius: 1rem;
+  background: #1f2937;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+
+.account-modal .account-panel__head {
+  padding-right: 1.75rem;
+}
+
+.account-panel--inline {
   margin: 0 0 1.25rem;
   padding: 1rem 1.1rem;
   border-radius: 0.85rem;

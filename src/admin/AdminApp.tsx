@@ -5,12 +5,15 @@ import {
   checkAdminSession,
   countryLabel,
   fetchAdminStats,
+  fetchAdminUsers,
   fetchFbPageStats,
+  formatDateTime,
   formatDisplayDate,
   formatDuration,
   formatMonthLabel,
   sourceLabel,
   type AdminStats,
+  type AdminUsersStats,
   type CountrySourceStat,
   type FbMetricBlock,
   type FbPageStats,
@@ -18,7 +21,7 @@ import {
 } from "./adminApi";
 
 type Tab = "today" | "month" | "all";
-type MainView = "website" | "facebook";
+type MainView = "website" | "facebook" | "users";
 
 function formatMetric(value: number | null | undefined): string {
   if (value == null) return "—";
@@ -201,6 +204,119 @@ function FbMetricCards({
   );
 }
 
+function UsersDashboard({ userStats }: { userStats: AdminUsersStats | null }) {
+  if (!userStats) {
+    return (
+      <section className="admin-card">
+        <p className="admin-empty">Loading registered users…</p>
+      </section>
+    );
+  }
+
+  if (!userStats.configured) {
+    return (
+      <section className="admin-card admin-fb-setup">
+        <h2 className="admin-section-title">Registered users — not configured</h2>
+        <p>{userStats.setupHint}</p>
+        <ol className="admin-fb-setup-steps">
+          <li>In Supabase → Project Settings → API, copy the <strong>Project URL</strong> and <strong>service_role</strong> key.</li>
+          <li>In Netlify → Environment variables, set <code>SUPABASE_URL</code> and <code>SUPABASE_SERVICE_ROLE_KEY</code> (Functions scope only — never expose publicly).</li>
+          <li>Redeploy the site and refresh this page.</li>
+        </ol>
+      </section>
+    );
+  }
+
+  if (userStats.error) {
+    return (
+      <section className="admin-card">
+        <p className="admin-error">{userStats.error}</p>
+      </section>
+    );
+  }
+
+  return (
+    <>
+      <div className="admin-summary-grid">
+        <div className="admin-summary-card is-active">
+          <span>Registered</span>
+          <strong>{userStats.totalUsers.toLocaleString()}</strong>
+        </div>
+        <div className="admin-summary-card">
+          <span>New today</span>
+          <strong>{userStats.newToday.toLocaleString()}</strong>
+        </div>
+        <div className="admin-summary-card">
+          <span>New this month</span>
+          <strong>{userStats.newThisMonth.toLocaleString()}</strong>
+        </div>
+      </div>
+
+      <div className="admin-summary-grid">
+        <div className="admin-summary-card">
+          <span>Signed in today</span>
+          <strong>{userStats.signedInToday.toLocaleString()}</strong>
+        </div>
+        <div className="admin-summary-card">
+          <span>Signed in this month</span>
+          <strong>{userStats.signedInThisMonth.toLocaleString()}</strong>
+        </div>
+        <div className="admin-summary-card">
+          <span>With synced stats</span>
+          <strong>{userStats.usersWithSyncedStats.toLocaleString()}</strong>
+        </div>
+      </div>
+
+      <section className="admin-card">
+        <h2 className="admin-section-title">Game stats (cloud)</h2>
+        <div className="admin-engagement-grid">
+          <div className="admin-engagement-card">
+            <span className="admin-engagement-label">Total games played</span>
+            <strong>{userStats.totalGamesPlayed.toLocaleString()}</strong>
+          </div>
+          <div className="admin-engagement-card">
+            <span className="admin-engagement-label">Total games won</span>
+            <strong>{userStats.totalGamesWon.toLocaleString()}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section className="admin-card">
+        <h2 className="admin-section-title">Recent users</h2>
+        {!userStats.recentUsers.length ? (
+          <p className="admin-empty">No registered users yet.</p>
+        ) : (
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Provider</th>
+                  <th>Registered</th>
+                  <th>Last sign-in</th>
+                </tr>
+              </thead>
+              <tbody>
+                {userStats.recentUsers.map((row) => (
+                  <tr key={row.id}>
+                    <td>
+                      {row.name && <div>{row.name}</div>}
+                      <div className="admin-user-email">{row.email || "—"}</div>
+                    </td>
+                    <td>{row.provider}</td>
+                    <td>{formatDateTime(row.createdAt)}</td>
+                    <td>{formatDateTime(row.lastSignInAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </>
+  );
+}
+
 function FacebookDashboard({
   fbStats,
   fbTab,
@@ -368,6 +484,7 @@ export default function AdminApp() {
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [fbStats, setFbStats] = useState<FbPageStats | null>(null);
+  const [userStats, setUserStats] = useState<AdminUsersStats | null>(null);
   const [mainView, setMainView] = useState<MainView>("website");
   const [tab, setTab] = useState<Tab>("today");
   const [fbTab, setFbTab] = useState<Tab>("today");
@@ -376,9 +493,14 @@ export default function AdminApp() {
   const refreshInFlight = useRef(false);
 
   const loadStats = useCallback(async () => {
-    const [website, facebook] = await Promise.all([fetchAdminStats(), fetchFbPageStats()]);
+    const [website, facebook, users] = await Promise.all([
+      fetchAdminStats(),
+      fetchFbPageStats(),
+      fetchAdminUsers(),
+    ]);
     setStats(website);
     setFbStats(facebook);
+    setUserStats(users);
     setLastUpdated(new Date());
   }, []);
 
@@ -439,6 +561,7 @@ export default function AdminApp() {
     setAuthenticated(false);
     setStats(null);
     setFbStats(null);
+    setUserStats(null);
   }
 
   if (authenticated === null) {
@@ -526,7 +649,9 @@ export default function AdminApp() {
           <p className="admin-subtitle">
             {mainView === "website"
               ? "Visits, sources, time on site, and devices"
-              : "Facebook Page views, reach, engagement, and followers"}
+              : mainView === "facebook"
+                ? "Facebook Page views, reach, engagement, and followers"
+                : "Registered players, sign-ins, and cloud game stats"}
           </p>
         </div>
         <div className="admin-header-actions">
@@ -562,6 +687,13 @@ export default function AdminApp() {
           onClick={() => setMainView("facebook")}
         >
           Facebook Page
+        </button>
+        <button
+          type="button"
+          className={`admin-main-tab${mainView === "users" ? " is-active" : ""}`}
+          onClick={() => setMainView("users")}
+        >
+          Registered users
         </button>
       </div>
 
@@ -621,8 +753,10 @@ export default function AdminApp() {
               />
             </section>
           </>
-        ) : (
+        ) : mainView === "facebook" ? (
           <FacebookDashboard fbStats={fbStats} fbTab={fbTab} onTabChange={setFbTab} />
+        ) : (
+          <UsersDashboard userStats={userStats} />
         )}
       </div>
     </div>
