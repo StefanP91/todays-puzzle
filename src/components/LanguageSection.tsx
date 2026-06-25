@@ -4,7 +4,7 @@ import type { AuthContent } from "../lib/authContent";
 import type { GameContent } from "../lib/gameContent";
 import type { Stats } from "../lib/storage";
 import type { SiteContent } from "../lib/siteContent";
-import AuthSection from "./AuthSection";
+import AccountSection from "./AccountSection";
 
 interface LanguageSectionProps {
   content: SiteContent;
@@ -13,7 +13,6 @@ interface LanguageSectionProps {
   authContent: AuthContent;
   gameContent: GameContent;
   stats: Stats;
-  closeLabel: string;
 }
 
 function LanguageCard({
@@ -99,16 +98,14 @@ export default function LanguageSection({
   authContent,
   gameContent,
   stats,
-  closeLabel,
 }: LanguageSectionProps) {
   return (
     <section className="landing-section" id="languages">
       <h2 className="landing-section-title">{content.selectLanguage}</h2>
-      <AuthSection
+      <AccountSection
         authContent={authContent}
         gameContent={gameContent}
         stats={stats}
-        closeLabel={closeLabel}
       />
       <LanguageGroup
         title={content.primaryLanguages}

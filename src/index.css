@@ -425,12 +425,18 @@ body {
   animation: shake 0.5s ease-in-out;
 }
 
-/* ── Top-right language button ── */
-.top-lang-btn {
+/* ── Top-right action buttons ── */
+.top-actions {
   position: fixed;
   top: calc(0.5rem + var(--safe-top));
   right: calc(0.65rem + var(--safe-right));
   z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.top-lang-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -466,9 +472,12 @@ body {
 }
 
 @media (min-width: 768px) {
-  .top-lang-btn {
+  .top-actions {
     top: calc(1rem + var(--safe-top));
     right: calc(1rem + var(--safe-right));
+  }
+
+  .top-lang-btn {
     font-size: 0.75rem;
     padding: 0.5rem 0.85rem;
   }
@@ -1112,42 +1121,6 @@ body {
 }
 
 /* Optional Supabase auth */
-.auth-landing {
-  margin: 0 0 1.25rem;
-  padding: 1rem 1.1rem;
-  border-radius: 0.85rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
-  text-align: center;
-}
-
-.auth-landing__hint {
-  margin: 0 0 0.75rem;
-  font-size: 0.85rem;
-  color: #9ca3af;
-  line-height: 1.4;
-}
-
-.auth-landing__login {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 2.75rem;
-  padding: 0.55rem 1.25rem;
-  border-radius: 0.65rem;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: #3b82f6;
-  color: #fff;
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  touch-action: manipulation;
-}
-
-.auth-landing__login:hover {
-  background: #2563eb;
-}
-
 .account-panel {
   margin: 0 0 1.25rem;
   padding: 1rem 1.1rem;

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import AuthTopButton from "./components/AuthTopButton";
 import BestTipsSection from "./components/BestTipsSection";
 import Board from "./components/Board";
 import CompletedBanner from "./components/CompletedBanner";
@@ -446,15 +447,18 @@ export default function App() {
       )}
 
       <div className="app-page">
-        <button
-          type="button"
-          className="top-lang-btn"
-          onClick={scrollToLanguages}
-          aria-label={siteContent.selectLanguage}
-        >
-          <span aria-hidden>🌐</span>
-          <span className="top-lang-btn__label">{siteContent.selectLanguage}</span>
-        </button>
+        <div className="top-actions">
+          <AuthTopButton authContent={authContent} closeLabel={gameContent.close} />
+          <button
+            type="button"
+            className="top-lang-btn"
+            onClick={scrollToLanguages}
+            aria-label={siteContent.selectLanguage}
+          >
+            <span aria-hidden>🌐</span>
+            <span className="top-lang-btn__label">{siteContent.selectLanguage}</span>
+          </button>
+        </div>
 
         {status === "playing" && isDaily && (
           <div className="game-hint game-info-box game-info-box--outside">
@@ -582,7 +586,6 @@ export default function App() {
             authContent={authContent}
             gameContent={gameContent}
             stats={stats}
-            closeLabel={gameContent.close}
           />
           <BestTipsSection content={siteContent} />
           <FaqSection content={siteContent} />
