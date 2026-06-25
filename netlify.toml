@@ -95,6 +95,12 @@
   force = true
 
 [[redirects]]
+  from = "/api/public-config"
+  to = "/.netlify/functions/public-config"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/admin/users"
   to = "/.netlify/functions/admin-users"
   status = 200

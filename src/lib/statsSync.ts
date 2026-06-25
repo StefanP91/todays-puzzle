@@ -1,6 +1,6 @@
 import type { GameLangCode } from "./gameLanguage";
 import { defaultStats, loadStats, saveStats, type Stats } from "./storage";
-import { supabase } from "./supabase";
+import { getSupabase } from "./supabase";
 
 const ALL_LANGS: GameLangCode[] = [
   "mk", "en", "sr", "hr", "bs", "sl", "sq", "bg", "el", "ro",
@@ -53,6 +53,7 @@ export function mergeStats(local: Stats, remote: Stats): Stats {
 }
 
 export async function fetchCloudStats(userId: string): Promise<Partial<Record<GameLangCode, Stats>>> {
+  const supabase = getSupabase();
   if (!supabase) return {};
 
   const { data, error } = await supabase
@@ -72,6 +73,7 @@ export async function fetchCloudStats(userId: string): Promise<Partial<Record<Ga
 }
 
 export async function upsertCloudStats(userId: string, lang: GameLangCode, stats: Stats): Promise<void> {
+  const supabase = getSupabase();
   if (!supabase) return;
 
   const { error } = await supabase.from("user_stats").upsert(

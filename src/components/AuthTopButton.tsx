@@ -19,10 +19,10 @@ export default function AuthTopButton({
   stats,
   closeLabel,
 }: AuthTopButtonProps) {
-  const { user, configured, loading, signOut } = useAuth();
+  const { user, configured, signOut } = useAuth();
   const [open, setOpen] = useState(false);
 
-  if (!configured || loading) return null;
+  if (!configured) return null;
 
   if (user) {
     return (
