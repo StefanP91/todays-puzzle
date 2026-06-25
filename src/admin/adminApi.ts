@@ -17,11 +17,24 @@ export interface PeriodStats {
   byDevice: DeviceStats;
 }
 
+export interface CountryStat {
+  country: string;
+  count: number;
+}
+
+export interface SourceTrafficStats {
+  today: { date: string; total: number; byCountry: CountryStat[] };
+  month: { month: string; total: number; byCountry: CountryStat[] };
+  allTime: { total: number; byCountry: CountryStat[] };
+  dailySeries: { date: string; total: number }[];
+}
+
 export interface AdminStats {
   today: PeriodStats & { date: string };
   month: PeriodStats & { month: string };
   allTime: PeriodStats;
   dailySeries: { date: string; total: number }[];
+  tiktokTraffic: SourceTrafficStats;
 }
 
 const jsonHeaders = { "Content-Type": "application/json" };
@@ -202,6 +215,31 @@ export async function fetchAdminReports(): Promise<AdminReportsResponse> {
     cache: "no-store",
   });
   return parseJson<AdminReportsResponse>(response);
+}
+
+export interface TikTokPromoLanguage {
+  lang: string;
+  hasPost: boolean;
+  hasVideo: boolean;
+  postText: string | null;
+  videoUrl: string;
+}
+
+export interface TikTokPromoManifest {
+  available: boolean;
+  readyCount: number;
+  totalLanguages: number;
+  languages: TikTokPromoLanguage[];
+  generateHint: string;
+  note: string;
+}
+
+export async function fetchTikTokPromo(): Promise<TikTokPromoManifest> {
+  const response = await fetch("/api/admin/tiktok-promo", {
+    credentials: "include",
+    cache: "no-store",
+  });
+  return parseJson<TikTokPromoManifest>(response);
 }
 
 export async function markReportRead(id: string, read: boolean): Promise<ProblemReport> {

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { GAME_LANGUAGES } from "../lib/languages";
 import {
   adminLogin,
   adminLogout,
@@ -8,6 +9,7 @@ import {
   fetchAdminStats,
   fetchAdminUsers,
   fetchFbPageStats,
+  fetchTikTokPromo,
   formatDateTime,
   formatDisplayDate,
   formatDuration,
@@ -21,10 +23,12 @@ import {
   type FbPageStats,
   type PeriodStats,
   type ProblemReport,
+  type SourceTrafficStats,
+  type TikTokPromoManifest,
 } from "./adminApi";
 
 type Tab = "today" | "month" | "all";
-type MainView = "website" | "facebook" | "users" | "reports";
+type MainView = "website" | "facebook" | "tiktok" | "users" | "reports";
 
 function formatMetric(value: number | null | undefined): string {
   if (value == null) return "—";
@@ -34,6 +38,11 @@ function formatMetric(value: number | null | undefined): string {
 function percent(count: number, total: number): string {
   if (!total) return "0%";
   return `${((count / total) * 100).toFixed(1)}%`;
+}
+
+function langLabel(code: string): string {
+  const lang = GAME_LANGUAGES.find((item) => item.code === code);
+  return lang ? `${lang.flag} ${lang.nativeName}` : code.toUpperCase();
 }
 
 const STATS_TIME_ZONE = "Europe/Skopje";
@@ -84,6 +93,35 @@ function CountrySourceTable({ rows, total }: { rows: CountrySourceStat[]; total:
             <tr key={`${row.country}-${row.source}`}>
               <td>{countryLabel(row.country)}</td>
               <td>{sourceLabel(row.source)}</td>
+              <td>{row.count.toLocaleString()}</td>
+              <td>{percent(row.count, total)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function CountryTable({ rows, total }: { rows: { country: string; count: number }[]; total: number }) {
+  if (!total) {
+    return <p className="admin-empty">No visits recorded yet.</p>;
+  }
+
+  return (
+    <div className="admin-table-wrap">
+      <table className="admin-table">
+        <thead>
+          <tr>
+            <th>Country</th>
+            <th>Visits</th>
+            <th>Share</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.country}>
+              <td>{countryLabel(row.country)}</td>
               <td>{row.count.toLocaleString()}</td>
               <td>{percent(row.count, total)}</td>
             </tr>
@@ -544,6 +582,213 @@ function FacebookDashboard({
   );
 }
 
+function TikTokDashboard({
+  stats,
+  promo,
+  tiktokTab,
+  onTabChange,
+}: {
+  stats: AdminStats | null;
+  promo: TikTokPromoManifest | null;
+  tiktokTab: Tab;
+  onTabChange: (tab: Tab) => void;
+}) {
+  const [selectedLang, setSelectedLang] = useState("mk");
+  const [copiedLang, setCopiedLang] = useState<string | null>(null);
+
+  const traffic: SourceTrafficStats | null = stats?.tiktokTraffic ?? null;
+
+  const activePeriod =
+    tiktokTab === "today"
+      ? traffic?.today
+      : tiktokTab === "month"
+        ? traffic?.month
+        : traffic?.allTime;
+
+  const activeTitle =
+    tiktokTab === "today"
+      ? `Today (${traffic?.today.date ? formatDisplayDate(traffic.today.date) : "—"})`
+      : tiktokTab === "month"
+        ? formatMonthLabel(traffic?.month.month ?? "")
+        : "All time";
+
+  const selectedPromo = promo?.languages.find((item) => item.lang === selectedLang) ?? null;
+
+  async function copyPostText(lang: string, text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedLang(lang);
+      window.setTimeout(() => setCopiedLang((current) => (current === lang ? null : current)), 2000);
+    } catch {
+      setCopiedLang(null);
+    }
+  }
+
+  return (
+    <>
+      <section className="admin-card admin-fb-page-card">
+        <h2 className="admin-section-title">TikTok → website visits</h2>
+        <p className="admin-fb-note">
+          Clicks from TikTok to your game (referrer or <code>utm_source=tiktok</code>). This is not
+          TikTok video views or followers — TikTok does not expose those via a simple API like Facebook
+          Page Insights.
+        </p>
+      </section>
+
+      {!traffic ? (
+        <section className="admin-card">
+          <p className="admin-empty">Loading TikTok traffic…</p>
+        </section>
+      ) : (
+        <>
+          <div className="admin-summary-grid">
+            <button
+              type="button"
+              className={`admin-summary-card${tiktokTab === "today" ? " is-active" : ""}`}
+              onClick={() => onTabChange("today")}
+            >
+              <span>Today</span>
+              <strong>{traffic.today.total.toLocaleString()}</strong>
+              <small>visits</small>
+            </button>
+            <button
+              type="button"
+              className={`admin-summary-card${tiktokTab === "month" ? " is-active" : ""}`}
+              onClick={() => onTabChange("month")}
+            >
+              <span>This month</span>
+              <strong>{traffic.month.total.toLocaleString()}</strong>
+              <small>visits</small>
+            </button>
+            <button
+              type="button"
+              className={`admin-summary-card${tiktokTab === "all" ? " is-active" : ""}`}
+              onClick={() => onTabChange("all")}
+            >
+              <span>All time</span>
+              <strong>{traffic.allTime.total.toLocaleString()}</strong>
+              <small>visits</small>
+            </button>
+          </div>
+
+          <section className="admin-card">
+            <h2 className="admin-section-title">{activeTitle}</h2>
+            <p className="admin-total-line">
+              Visits from TikTok: <strong>{(activePeriod?.total ?? 0).toLocaleString()}</strong>
+            </p>
+            <h3 className="admin-section-title admin-section-title--sub">Countries</h3>
+            <CountryTable rows={activePeriod?.byCountry ?? []} total={activePeriod?.total ?? 0} />
+          </section>
+
+          <section className="admin-card">
+            <DailyChart
+              series={traffic.dailySeries ?? []}
+              unitLabel="visit"
+              title="TikTok visits — last 30 days"
+            />
+          </section>
+        </>
+      )}
+
+      <section className="admin-card admin-tiktok-promo">
+        <div className="admin-tiktok-promo-head">
+          <div>
+            <h2 className="admin-section-title">Promo slideshows</h2>
+            <p className="admin-fb-note">
+              {promo
+                ? `${promo.readyCount} / ${promo.totalLanguages} languages ready (video + caption)`
+                : "Loading promo files…"}
+            </p>
+          </div>
+        </div>
+
+        {promo?.note && <p className="admin-fb-note">{promo.note}</p>}
+
+        {!promo ? (
+          <p className="admin-empty">Loading…</p>
+        ) : (
+          <>
+            <div className="admin-tiktok-lang-grid">
+              {promo.languages.map((item) => (
+                <button
+                  key={item.lang}
+                  type="button"
+                  className={`admin-tiktok-lang-btn${selectedLang === item.lang ? " is-active" : ""}${
+                    item.hasVideo && item.hasPost ? " is-ready" : ""
+                  }`}
+                  onClick={() => setSelectedLang(item.lang)}
+                >
+                  <span>{langLabel(item.lang)}</span>
+                  <small>
+                    {item.hasVideo && item.hasPost
+                      ? "Ready"
+                      : item.hasVideo
+                        ? "Video only"
+                        : item.hasPost
+                          ? "Text only"
+                          : "Missing"}
+                  </small>
+                </button>
+              ))}
+            </div>
+
+            {selectedPromo ? (
+              <div className="admin-tiktok-preview">
+                <div className="admin-tiktok-preview-media">
+                  {selectedPromo.hasVideo ? (
+                    <video
+                      key={selectedPromo.videoUrl}
+                      className="admin-tiktok-video"
+                      src={selectedPromo.videoUrl}
+                      controls
+                      playsInline
+                      preload="metadata"
+                    />
+                  ) : (
+                    <div className="admin-tiktok-video-placeholder">
+                      <p>No video for {langLabel(selectedPromo.lang)}</p>
+                      <code>{promo.generateHint}</code>
+                    </div>
+                  )}
+                  {selectedPromo.hasVideo && (
+                    <a
+                      className="admin-btn admin-btn-small admin-tiktok-download"
+                      href={selectedPromo.videoUrl}
+                      download={`slideshow-${selectedPromo.lang}.mp4`}
+                    >
+                      Download MP4
+                    </a>
+                  )}
+                </div>
+
+                <div className="admin-tiktok-preview-copy">
+                  <div className="admin-tiktok-copy-head">
+                    <h3 className="admin-section-title admin-section-title--sub">Post caption</h3>
+                    {selectedPromo.postText && (
+                      <button
+                        type="button"
+                        className="admin-btn admin-btn-small"
+                        onClick={() => void copyPostText(selectedPromo.lang, selectedPromo.postText!)}
+                      >
+                        {copiedLang === selectedPromo.lang ? "Copied!" : "Copy text"}
+                      </button>
+                    )}
+                  </div>
+                  {selectedPromo.postText ? (
+                    <pre className="admin-tiktok-post-text">{selectedPromo.postText}</pre>
+                  ) : (
+                    <p className="admin-empty">No caption file yet.</p>
+                  )}
+                </div>
+              </div>
+            ) : null}
+          </>
+        )}
+      </section>
+    </>
+  );
+}
+
 export default function AdminApp() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [email, setEmail] = useState("");
@@ -552,25 +797,29 @@ export default function AdminApp() {
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [fbStats, setFbStats] = useState<FbPageStats | null>(null);
+  const [tiktokPromo, setTiktokPromo] = useState<TikTokPromoManifest | null>(null);
   const [userStats, setUserStats] = useState<AdminUsersStats | null>(null);
   const [reports, setReports] = useState<ProblemReport[]>([]);
   const [reportsUnread, setReportsUnread] = useState(0);
   const [mainView, setMainView] = useState<MainView>("website");
   const [tab, setTab] = useState<Tab>("today");
   const [fbTab, setFbTab] = useState<Tab>("today");
+  const [tiktokTab, setTiktokTab] = useState<Tab>("today");
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const refreshInFlight = useRef(false);
 
   const loadStats = useCallback(async () => {
-    const [website, facebook, users, problemReports] = await Promise.all([
+    const [website, facebook, promo, users, problemReports] = await Promise.all([
       fetchAdminStats(),
       fetchFbPageStats(),
+      fetchTikTokPromo(),
       fetchAdminUsers(),
       fetchAdminReports(),
     ]);
     setStats(website);
     setFbStats(facebook);
+    setTiktokPromo(promo);
     setUserStats(users);
     setReports(problemReports.reports);
     setReportsUnread(problemReports.unread);
@@ -634,6 +883,7 @@ export default function AdminApp() {
     setAuthenticated(false);
     setStats(null);
     setFbStats(null);
+    setTiktokPromo(null);
     setUserStats(null);
     setReports([]);
     setReportsUnread(0);
@@ -739,9 +989,11 @@ export default function AdminApp() {
               ? "Visits, sources, time on site, and devices"
               : mainView === "facebook"
                 ? "Facebook Page views, reach, engagement, and followers"
-                : mainView === "users"
-                  ? "Registered players, sign-ins, and cloud game stats"
-                  : "User-submitted bug reports and feedback"}
+                : mainView === "tiktok"
+                  ? "TikTok traffic to the site and promo slideshows per language"
+                  : mainView === "users"
+                    ? "Registered players, sign-ins, and cloud game stats"
+                    : "User-submitted bug reports and feedback"}
           </p>
         </div>
         <div className="admin-header-actions">
@@ -777,6 +1029,13 @@ export default function AdminApp() {
           onClick={() => setMainView("facebook")}
         >
           Facebook Page
+        </button>
+        <button
+          type="button"
+          className={`admin-main-tab${mainView === "tiktok" ? " is-active" : ""}`}
+          onClick={() => setMainView("tiktok")}
+        >
+          TikTok
         </button>
         <button
           type="button"
@@ -855,6 +1114,13 @@ export default function AdminApp() {
           </>
         ) : mainView === "facebook" ? (
           <FacebookDashboard fbStats={fbStats} fbTab={fbTab} onTabChange={setFbTab} />
+        ) : mainView === "tiktok" ? (
+          <TikTokDashboard
+            stats={stats}
+            promo={tiktokPromo}
+            tiktokTab={tiktokTab}
+            onTabChange={setTiktokTab}
+          />
         ) : mainView === "users" ? (
           <UsersDashboard userStats={userStats} />
         ) : (

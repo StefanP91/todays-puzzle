@@ -7,7 +7,16 @@
     "dev": "vite",
     "dev:netlify": "netlify dev",
     "build": "node scripts/generate-seo.mjs && node scripts/generate-og-images.mjs && tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "promo:tiktok": "node scripts/gen-tiktok-slideshow.mjs",
+    "promo:tiktok:batch1": "node scripts/gen-tiktok-slideshow.mjs mk sr hr",
+    "promo:tiktok:batch2": "node scripts/gen-tiktok-slideshow.mjs bs bg sl",
+    "promo:tiktok:batch3": "node scripts/gen-tiktok-slideshow.mjs sq el ro",
+    "promo:tiktok:batch4": "node scripts/gen-tiktok-slideshow.mjs de fr es",
+    "promo:tiktok:batch5": "node scripts/gen-tiktok-slideshow.mjs it pt nl",
+    "promo:tiktok:batch6": "node scripts/gen-tiktok-slideshow.mjs pl cs sv",
+    "promo:tiktok:batch7": "node scripts/gen-tiktok-slideshow.mjs hu uk",
+    "promo:tiktok:all": "node scripts/gen-tiktok-slideshow.mjs en mk sr hr bs bg sl sq el ro de fr es it pt nl pl cs sv hu uk"
   },
   "dependencies": {
     "@netlify/blobs": "^8.2.0",
@@ -22,6 +31,7 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
+    "ffmpeg-static": "^5.3.0",
     "netlify-cli": "^23.0.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",

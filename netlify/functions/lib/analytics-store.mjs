@@ -155,6 +155,86 @@ function toCountrySourceList(matrix) {
     .sort((a, b) => b.count - a.count || a.country.localeCompare(b.country));
 }
 
+function mergeMatrixForSource(target, stats, sourceFilter) {
+  if (!stats._matrix) return;
+  for (const [key, count] of Object.entries(stats._matrix)) {
+    const [country, source = "unknown"] = key.split("|");
+    if (source !== sourceFilter) continue;
+    const countryKey = matrixKey(country, sourceFilter);
+    target[countryKey] = (target[countryKey] || 0) + count;
+  }
+}
+
+function countSourceInStats(stats, sourceFilter) {
+  if (!stats._matrix) return 0;
+  let total = 0;
+  for (const [key, count] of Object.entries(stats._matrix)) {
+    const [, source = "unknown"] = key.split("|");
+    if (source === sourceFilter) total += count;
+  }
+  return total;
+}
+
+function toCountryListForSource(matrix, sourceFilter) {
+  const byCountry = {};
+  for (const [key, count] of Object.entries(matrix)) {
+    const [country, source = "unknown"] = key.split("|");
+    if (source !== sourceFilter) continue;
+    byCountry[country] = (byCountry[country] || 0) + count;
+  }
+  return Object.entries(byCountry)
+    .map(([country, count]) => ({ country, count }))
+    .sort((a, b) => b.count - a.count || a.country.localeCompare(b.country));
+}
+
+/** Visits from a single traffic source (e.g. tiktok) across time periods. */
+export function aggregateSourceStats(allDays, sourceFilter, options = {}) {
+  const today = options.today || todayKey();
+  const month = today.slice(0, 7);
+
+  const todayStats = allDays[today] || {};
+  const todayMatrix = emptyMatrix();
+  mergeMatrixForSource(todayMatrix, todayStats, sourceFilter);
+
+  const monthMatrix = emptyMatrix();
+  const allTimeMatrix = emptyMatrix();
+  let monthTotal = 0;
+  let allTimeTotal = 0;
+  const dailySeries = [];
+
+  for (const [dateKey, stats] of Object.entries(allDays)) {
+    const dayTotal = countSourceInStats(stats, sourceFilter);
+    dailySeries.push({ date: dateKey, total: dayTotal });
+    allTimeTotal += dayTotal;
+    mergeMatrixForSource(allTimeMatrix, stats, sourceFilter);
+
+    if (dateKey.startsWith(month)) {
+      monthTotal += dayTotal;
+      mergeMatrixForSource(monthMatrix, stats, sourceFilter);
+    }
+  }
+
+  dailySeries.sort((a, b) => a.date.localeCompare(b.date));
+
+  return {
+    today: {
+      date: today,
+      total: countSourceInStats(todayStats, sourceFilter),
+      byCountry: toCountryListForSource(todayMatrix, sourceFilter),
+    },
+    month: {
+      month,
+      total: monthTotal,
+      byCountry: toCountryListForSource(monthMatrix, sourceFilter),
+    },
+    allTime: {
+      total: allTimeTotal,
+      byCountry: toCountryListForSource(allTimeMatrix, sourceFilter),
+    },
+    dailySeries: dailySeries.slice(-60),
+  };
+}
+
 function avgDurationSeconds(duration) {
   if (!duration.sessions) return null;
   return Math.round(duration.totalSeconds / duration.sessions);
@@ -241,5 +321,8 @@ export function aggregateStats(allDays, options = {}) {
 
 export async function getAggregatedStats(event) {
   const allDays = await loadAllDayStats(event);
-  return aggregateStats(allDays);
+  return {
+    ...aggregateStats(allDays),
+    tiktokTraffic: aggregateSourceStats(allDays, "tiktok"),
+  };
 }
