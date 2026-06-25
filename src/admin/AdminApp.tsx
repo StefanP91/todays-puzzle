@@ -25,7 +25,7 @@ import {
 } from "./adminApi";
 
 type Tab = "today" | "month" | "all";
-type MainView = "website" | "facebook" | "tiktok" | "users" | "reports";
+type MainView = "website" | "facebook" | "tiktok" | "youtube" | "users" | "reports";
 
 function formatMetric(value: number | null | undefined): string {
   if (value == null) return "—";
@@ -574,83 +574,86 @@ function FacebookDashboard({
   );
 }
 
-function TikTokDashboard({
+function emptySourceTraffic(stats: AdminStats): SourceTrafficStats {
+  return {
+    today: { date: stats.today.date, total: 0, byCountry: [] },
+    month: { month: stats.month.month, total: 0, byCountry: [] },
+    allTime: { total: 0, byCountry: [] },
+    dailySeries: [],
+  };
+}
+
+function SourceTrafficDashboard({
   stats,
-  tiktokTab,
+  traffic,
+  periodTab,
   onTabChange,
+  sourceName,
+  utmSource,
+  note,
 }: {
   stats: AdminStats | null;
-  tiktokTab: Tab;
+  traffic: SourceTrafficStats | undefined;
+  periodTab: Tab;
   onTabChange: (tab: Tab) => void;
+  sourceName: string;
+  utmSource: string;
+  note: string;
 }) {
-  const traffic: SourceTrafficStats | null =
-    stats?.tiktokTraffic ??
-    (stats
-      ? {
-          today: { date: stats.today.date, total: 0, byCountry: [] },
-          month: { month: stats.month.month, total: 0, byCountry: [] },
-          allTime: { total: 0, byCountry: [] },
-          dailySeries: [],
-        }
-      : null);
+  const data: SourceTrafficStats | null = traffic ?? (stats ? emptySourceTraffic(stats) : null);
 
   const activePeriod =
-    tiktokTab === "today"
-      ? traffic?.today
-      : tiktokTab === "month"
-        ? traffic?.month
-        : traffic?.allTime;
+    periodTab === "today" ? data?.today : periodTab === "month" ? data?.month : data?.allTime;
 
   const activeTitle =
-    tiktokTab === "today"
-      ? `Today (${traffic?.today.date ? formatDisplayDate(traffic.today.date) : "—"})`
-      : tiktokTab === "month"
-        ? formatMonthLabel(traffic?.month.month ?? "")
+    periodTab === "today"
+      ? `Today (${data?.today.date ? formatDisplayDate(data.today.date) : "—"})`
+      : periodTab === "month"
+        ? formatMonthLabel(data?.month.month ?? "")
         : "All time";
 
   return (
     <>
       <section className="admin-card admin-fb-page-card">
-        <h2 className="admin-section-title">TikTok → website visits</h2>
+        <h2 className="admin-section-title">{sourceName} → website visits</h2>
         <p className="admin-fb-note">
-          Clicks from TikTok to your game (referrer or <code>utm_source=tiktok</code>). This is not
-          TikTok video views or followers — TikTok does not expose those via a simple API like Facebook
-          Page Insights.
+          Clicks from {sourceName} to your game (referrer or <code>utm_source={utmSource}</code>
+          ). {note}
         </p>
       </section>
 
-      {!traffic ? (
+      {!data ? (
         <section className="admin-card">
-          <p className="admin-empty">Loading TikTok traffic…</p>
+          <p className="admin-empty">Loading {sourceName} traffic…</p>
         </section>
       ) : (
         <>
           <div className="admin-summary-grid">
             <button
               type="button"
-              className={`admin-summary-card${tiktokTab === "today" ? " is-active" : ""}`}
+              className={`admin-summary-card${periodTab === "today" ? " is-active" : ""}`}
               onClick={() => onTabChange("today")}
             >
               <span>Today</span>
-              <strong>{traffic.today.total.toLocaleString()}</strong>
+              <strong>{data.today.total.toLocaleString()}</strong>
               <small>visits</small>
             </button>
             <button
               type="button"
-              className={`admin-summary-card${tiktokTab === "month" ? " is-active" : ""}`}
+              className={`admin-summary-card${periodTab === "month" ? " is-active" : ""}`}
               onClick={() => onTabChange("month")}
             >
               <span>This month</span>
-              <strong>{traffic.month.total.toLocaleString()}</strong>
+              <strong>{data.month.total.toLocaleString()}</strong>
               <small>visits</small>
             </button>
             <button
               type="button"
-              className={`admin-summary-card${tiktokTab === "all" ? " is-active" : ""}`}
+              className={`admin-summary-card${periodTab === "all" ? " is-active" : ""}`}
               onClick={() => onTabChange("all")}
             >
               <span>All time</span>
-              <strong>{traffic.allTime.total.toLocaleString()}</strong>
+              <strong>{data.allTime.total.toLocaleString()}</strong>
               <small>visits</small>
             </button>
           </div>
@@ -658,7 +661,7 @@ function TikTokDashboard({
           <section className="admin-card">
             <h2 className="admin-section-title">{activeTitle}</h2>
             <p className="admin-total-line">
-              Visits from TikTok: <strong>{(activePeriod?.total ?? 0).toLocaleString()}</strong>
+              Visits from {sourceName}: <strong>{(activePeriod?.total ?? 0).toLocaleString()}</strong>
             </p>
             <h3 className="admin-section-title admin-section-title--sub">Countries</h3>
             <CountryTable rows={activePeriod?.byCountry ?? []} total={activePeriod?.total ?? 0} />
@@ -666,9 +669,9 @@ function TikTokDashboard({
 
           <section className="admin-card">
             <DailyChart
-              series={traffic.dailySeries ?? []}
+              series={data.dailySeries ?? []}
               unitLabel="visit"
-              title="TikTok visits — last 30 days"
+              title={`${sourceName} visits — last 30 days`}
             />
           </section>
         </>
@@ -692,6 +695,7 @@ export default function AdminApp() {
   const [tab, setTab] = useState<Tab>("today");
   const [fbTab, setFbTab] = useState<Tab>("today");
   const [tiktokTab, setTiktokTab] = useState<Tab>("today");
+  const [youtubeTab, setYoutubeTab] = useState<Tab>("today");
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const refreshInFlight = useRef(false);
@@ -904,7 +908,9 @@ export default function AdminApp() {
                 ? "Facebook Page views, reach, engagement, and followers"
                 : mainView === "tiktok"
                   ? "Visits to the site from TikTok"
-                  : mainView === "users"
+                  : mainView === "youtube"
+                    ? "Visits to the site from YouTube"
+                    : mainView === "users"
                     ? "Registered players, sign-ins, and cloud game stats"
                     : "User-submitted bug reports and feedback"}
           </p>
@@ -949,6 +955,13 @@ export default function AdminApp() {
           onClick={() => setMainView("tiktok")}
         >
           TikTok
+        </button>
+        <button
+          type="button"
+          className={`admin-main-tab${mainView === "youtube" ? " is-active" : ""}`}
+          onClick={() => setMainView("youtube")}
+        >
+          YouTube
         </button>
         <button
           type="button"
@@ -1028,7 +1041,25 @@ export default function AdminApp() {
         ) : mainView === "facebook" ? (
           <FacebookDashboard fbStats={fbStats} fbTab={fbTab} onTabChange={setFbTab} />
         ) : mainView === "tiktok" ? (
-          <TikTokDashboard stats={stats} tiktokTab={tiktokTab} onTabChange={setTiktokTab} />
+          <SourceTrafficDashboard
+            stats={stats}
+            traffic={stats?.tiktokTraffic}
+            periodTab={tiktokTab}
+            onTabChange={setTiktokTab}
+            sourceName="TikTok"
+            utmSource="tiktok"
+            note="This is not TikTok video views or followers — TikTok does not expose those via a simple API like Facebook Page Insights."
+          />
+        ) : mainView === "youtube" ? (
+          <SourceTrafficDashboard
+            stats={stats}
+            traffic={stats?.youtubeTraffic}
+            periodTab={youtubeTab}
+            onTabChange={setYoutubeTab}
+            sourceName="YouTube"
+            utmSource="youtube"
+            note="This is not YouTube Shorts views or subscribers — only clicks that reached your game site."
+          />
         ) : mainView === "users" ? (
           <UsersDashboard userStats={userStats} />
         ) : (

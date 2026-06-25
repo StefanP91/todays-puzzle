@@ -35,6 +35,7 @@ export interface AdminStats {
   allTime: PeriodStats;
   dailySeries: { date: string; total: number }[];
   tiktokTraffic: SourceTrafficStats;
+  youtubeTraffic: SourceTrafficStats;
 }
 
 const jsonHeaders = { "Content-Type": "application/json" };

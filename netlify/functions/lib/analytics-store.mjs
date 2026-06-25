@@ -324,5 +324,6 @@ export async function getAggregatedStats(event) {
   return {
     ...aggregateStats(allDays),
     tiktokTraffic: aggregateSourceStats(allDays, "tiktok"),
+    youtubeTraffic: aggregateSourceStats(allDays, "youtube"),
   };
 }
