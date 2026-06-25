@@ -451,22 +451,34 @@ export default function App() {
       )}
 
       <div className="app-page">
-        <div className="top-actions">
-          <AuthTopButton
-            authContent={authContent}
-            gameContent={gameContent}
-            stats={stats}
-            closeLabel={gameContent.close}
-          />
+        <div className="top-bar">
           <button
             type="button"
             className="top-lang-btn"
-            onClick={scrollToLanguages}
-            aria-label={siteContent.selectLanguage}
+            onClick={() => setShowReport(true)}
           >
-            <span aria-hidden>🌐</span>
-            <span className="top-lang-btn__label">{siteContent.selectLanguage}</span>
+            <span className="top-report-icon" aria-hidden>
+              ⚠
+            </span>
+            <span className="top-lang-btn__label">{reportContent.button}</span>
           </button>
+          <div className="top-actions">
+            <AuthTopButton
+              authContent={authContent}
+              gameContent={gameContent}
+              stats={stats}
+              closeLabel={gameContent.close}
+            />
+            <button
+              type="button"
+              className="top-lang-btn"
+              onClick={scrollToLanguages}
+              aria-label={siteContent.selectLanguage}
+            >
+              <span aria-hidden>🌐</span>
+              <span className="top-lang-btn__label">{siteContent.selectLanguage}</span>
+            </button>
+          </div>
         </div>
 
         {status === "playing" && isDaily && (
@@ -585,16 +597,6 @@ export default function App() {
               />
             </div>
           </main>
-        </div>
-
-        <div className="report-problem-wrap">
-          <button
-            type="button"
-            className="report-problem-btn"
-            onClick={() => setShowReport(true)}
-          >
-            {reportContent.button}
-          </button>
         </div>
 
         <div className="landing-footer">
