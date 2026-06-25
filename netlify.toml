@@ -118,12 +118,6 @@
   status = 200
   force = true
 
-[[redirects]]
-  from = "/api/admin/tiktok-promo"
-  to = "/.netlify/functions/admin-tiktok-promo"
-  status = 200
-  force = true
-
 [[edge_functions]]
   path = "/*"
   function = "og-meta"

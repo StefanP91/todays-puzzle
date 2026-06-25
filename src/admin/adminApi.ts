@@ -217,31 +217,6 @@ export async function fetchAdminReports(): Promise<AdminReportsResponse> {
   return parseJson<AdminReportsResponse>(response);
 }
 
-export interface TikTokPromoLanguage {
-  lang: string;
-  hasPost: boolean;
-  hasVideo: boolean;
-  postText: string | null;
-  videoUrl: string;
-}
-
-export interface TikTokPromoManifest {
-  available: boolean;
-  readyCount: number;
-  totalLanguages: number;
-  languages: TikTokPromoLanguage[];
-  generateHint: string;
-  note: string;
-}
-
-export async function fetchTikTokPromo(): Promise<TikTokPromoManifest> {
-  const response = await fetch("/api/admin/tiktok-promo", {
-    credentials: "include",
-    cache: "no-store",
-  });
-  return parseJson<TikTokPromoManifest>(response);
-}
-
 export async function markReportRead(id: string, read: boolean): Promise<ProblemReport> {
   const response = await fetch("/api/admin/reports", {
     method: "PATCH",
