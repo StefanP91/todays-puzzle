@@ -16,7 +16,8 @@
     "promo:tiktok:batch5": "node scripts/gen-tiktok-slideshow.mjs it pt nl",
     "promo:tiktok:batch6": "node scripts/gen-tiktok-slideshow.mjs pl cs sv",
     "promo:tiktok:batch7": "node scripts/gen-tiktok-slideshow.mjs hu uk",
-    "promo:tiktok:all": "node scripts/gen-tiktok-slideshow.mjs en mk sr hr bs bg sl sq el ro de fr es it pt nl pl cs sv hu uk"
+    "promo:tiktok:all": "node scripts/gen-tiktok-slideshow.mjs en mk sr hr bs bg sl sq el ro de fr es it pt nl pl cs sv hu uk",
+    "promo:tiktok:posts": "node scripts/write-tiktok-posts.mjs"
   },
   "dependencies": {
     "@netlify/blobs": "^8.2.0",

@@ -15,12 +15,14 @@ import ffmpegPath from "ffmpeg-static";
 import sharp from "sharp";
 
 import { buildSlides, getTikTokContent } from "./tiktok-slideshow-content.mjs";
+import { buildTikTokPostText } from "./tiktok-post-copy.mjs";
 
 const execFileAsync = promisify(execFile);
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 const outDir = join(root, "public", "promo", "tiktok", "videos");
+const postsDir = join(root, "public", "promo", "tiktok", "posts");
 const framesDir = join(root, "public", "promo", "tiktok", "frames");
 const audioDir = join(root, "public", "promo", "tiktok", "audio");
 
@@ -486,6 +488,10 @@ async function buildVideo(lang) {
   await muxVideoWithAudio(silentMp4, audioPath, outMp4, durationSec);
 
   console.log(`[${lang}] done: ${outMp4.replace(/\\/g, "/")} (~${durationSec}s)`);
+
+  mkdirSync(postsDir, { recursive: true });
+  writeFileSync(join(postsDir, `post-${lang}.txt`), `${buildTikTokPostText(lang)}\n`, "utf8");
+  console.log(`[${lang}] post: promo/tiktok/posts/post-${lang}.txt`);
 }
 
 async function main() {

@@ -456,6 +456,7 @@ export default function App() {
             type="button"
             className="top-lang-btn"
             onClick={() => setShowReport(true)}
+            aria-label={reportContent.button}
           >
             <span className="top-report-icon" aria-hidden>
               ⚠
