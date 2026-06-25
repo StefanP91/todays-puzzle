@@ -29,7 +29,8 @@ export default function Keyboard({
   return (
     <div className="w-full max-w-full mx-auto keyboard-safe select-none">
       {rows.map((row, rowIndex) => {
-        const rowKeys = rowIndex === 2 ? row.length + 2 : row.length;
+        const isActionRow = rowIndex === rows.length - 1;
+        const rowKeys = isActionRow ? row.length + 2 : row.length;
 
         return (
         <div
@@ -40,7 +41,7 @@ export default function Keyboard({
             "--row-keys": rowKeys,
           } as CSSProperties}
         >
-          {rowIndex === 2 && (
+          {isActionRow && (
             <button
               type="button"
               disabled={disabled}
@@ -67,7 +68,7 @@ export default function Keyboard({
               {key}
             </button>
           ))}
-          {rowIndex === 2 && (
+          {isActionRow && (
             <button
               type="button"
               disabled={disabled}
