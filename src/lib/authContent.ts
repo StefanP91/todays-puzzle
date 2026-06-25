@@ -3,6 +3,8 @@ import type { GameLangCode } from "./gameLanguage";
 export interface AuthContent {
   login: string;
   logout: string;
+  accountTitle: string;
+  memberSince: string;
   titleLogin: string;
   titleRegister: string;
   email: string;
@@ -21,6 +23,8 @@ export interface AuthContent {
 const en: AuthContent = {
   login: "Sign in",
   logout: "Sign out",
+  accountTitle: "My account",
+  memberSince: "Member since",
   titleLogin: "Sign in",
   titleRegister: "Create account",
   email: "Email",
@@ -41,6 +45,8 @@ const CONTENT: Record<GameLangCode, AuthContent> = {
   mk: {
     login: "Најава",
     logout: "Одјава",
+    accountTitle: "Моја сметка",
+    memberSince: "Член од",
     titleLogin: "Најава",
     titleRegister: "Регистрација",
     email: "Е-пошта",

@@ -1112,22 +1112,150 @@ body {
 }
 
 /* Optional Supabase auth */
-.auth-header-btn {
-  font-size: 0.7rem;
-  line-height: 1.1;
-  max-width: 4.5rem;
-  padding: 0.35rem 0.45rem;
-  border-radius: 0.5rem;
+.auth-landing {
+  margin: 0 0 1.25rem;
+  padding: 1rem 1.1rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  text-align: center;
+}
+
+.auth-landing__hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
   color: #9ca3af;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  line-height: 1.4;
+}
+
+.auth-landing__login {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.55rem 1.25rem;
+  border-radius: 0.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #3b82f6;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
   cursor: pointer;
   touch-action: manipulation;
 }
 
-.auth-header-btn:hover {
-  color: #e5e7eb;
+.auth-landing__login:hover {
+  background: #2563eb;
+}
+
+.account-panel {
+  margin: 0 0 1.25rem;
+  padding: 1rem 1.1rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.account-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.account-panel__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.account-panel__logout {
+  flex-shrink: 0;
+  padding: 0.35rem 0.65rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: transparent;
+  color: #d1d5db;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.account-panel__logout:hover {
   background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.account-panel__profile {
+  margin-bottom: 0.9rem;
+}
+
+.account-panel__name {
+  margin: 0 0 0.15rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.account-panel__email {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #d1d5db;
+  word-break: break-all;
+}
+
+.account-panel__meta {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  color: #9ca3af;
+}
+
+.account-panel__synced {
+  margin: 0.45rem 0 0;
+  font-size: 0.78rem;
+  color: #86efac;
+}
+
+.account-panel__stats-title {
+  margin: 0 0 0.55rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.account-panel__stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.account-panel__stat {
+  text-align: center;
+  padding: 0.55rem 0.25rem;
+  border-radius: 0.55rem;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.account-panel__stat-value {
+  display: block;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.account-panel__stat-label {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.65rem;
+  color: #9ca3af;
+  line-height: 1.2;
+}
+
+@media (max-width: 380px) {
+  .account-panel__stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .auth-overlay {

@@ -1,11 +1,19 @@
 import type { GameLanguage } from "../lib/languages";
 import { LANGUAGES_BY_REGION } from "../lib/languages";
+import type { AuthContent } from "../lib/authContent";
+import type { GameContent } from "../lib/gameContent";
+import type { Stats } from "../lib/storage";
 import type { SiteContent } from "../lib/siteContent";
+import AuthSection from "./AuthSection";
 
 interface LanguageSectionProps {
   content: SiteContent;
   activeCode: string;
   onSelect: (lang: GameLanguage) => void;
+  authContent: AuthContent;
+  gameContent: GameContent;
+  stats: Stats;
+  closeLabel: string;
 }
 
 function LanguageCard({
@@ -88,10 +96,20 @@ export default function LanguageSection({
   content,
   activeCode,
   onSelect,
+  authContent,
+  gameContent,
+  stats,
+  closeLabel,
 }: LanguageSectionProps) {
   return (
     <section className="landing-section" id="languages">
       <h2 className="landing-section-title">{content.selectLanguage}</h2>
+      <AuthSection
+        authContent={authContent}
+        gameContent={gameContent}
+        stats={stats}
+        closeLabel={closeLabel}
+      />
       <LanguageGroup
         title={content.primaryLanguages}
         languages={LANGUAGES_BY_REGION.primary}

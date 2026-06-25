@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import AuthButton from "./components/AuthButton";
 import BestTipsSection from "./components/BestTipsSection";
 import Board from "./components/Board";
 import CompletedBanner from "./components/CompletedBanner";
@@ -511,17 +510,14 @@ export default function App() {
                   : `#${puzzleNumber}`}
               </p>
             </div>
-            <div className="flex items-center gap-0.5 shrink-0">
-              <AuthButton content={authContent} closeLabel={gameContent.close} />
-              <button
-                type="button"
-                onClick={showHintClue}
-                className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-white/10 active:bg-white/15 transition text-lg touch-manipulation"
-                aria-label={gameContent.hintAria}
-              >
-                💡
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={showHintClue}
+              className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-white/10 active:bg-white/15 transition text-lg touch-manipulation"
+              aria-label={gameContent.hintAria}
+            >
+              💡
+            </button>
           </header>
 
           <main className="game-main">
@@ -583,6 +579,10 @@ export default function App() {
             content={siteContent}
             activeCode={gameLang}
             onSelect={handleLanguageSelect}
+            authContent={authContent}
+            gameContent={gameContent}
+            stats={stats}
+            closeLabel={gameContent.close}
           />
           <BestTipsSection content={siteContent} />
           <FaqSection content={siteContent} />
