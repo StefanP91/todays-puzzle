@@ -5,9 +5,28 @@ import { fileURLToPath } from "node:url";
 import { isAuthorizedAdmin, unauthorizedResponse } from "./lib/auth.mjs";
 import { VALID_LANGS } from "./lib/share-content.mjs";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const promoRoot = join(__dirname, "..", "..", "public", "promo", "tiktok");
 const LANG_ORDER = [...VALID_LANGS].sort();
+
+function resolvePromoRoot() {
+  const candidates = [
+    join(process.cwd(), "public", "promo", "tiktok"),
+    join(process.cwd(), "dist", "promo", "tiktok"),
+  ];
+
+  if (typeof import.meta !== "undefined" && import.meta.url) {
+    candidates.unshift(
+      join(dirname(fileURLToPath(import.meta.url)), "..", "..", "public", "promo", "tiktok"),
+    );
+  }
+
+  for (const dir of candidates) {
+    if (existsSync(dir)) return dir;
+  }
+
+  return candidates[0];
+}
+
+const promoRoot = resolvePromoRoot();
 
 function buildManifest() {
   const available = existsSync(promoRoot);

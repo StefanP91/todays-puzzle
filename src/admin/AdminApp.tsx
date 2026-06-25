@@ -596,7 +596,16 @@ function TikTokDashboard({
   const [selectedLang, setSelectedLang] = useState("mk");
   const [copiedLang, setCopiedLang] = useState<string | null>(null);
 
-  const traffic: SourceTrafficStats | null = stats?.tiktokTraffic ?? null;
+  const traffic: SourceTrafficStats | null =
+    stats?.tiktokTraffic ??
+    (stats
+      ? {
+          today: { date: stats.today.date, total: 0, byCountry: [] },
+          month: { month: stats.month.month, total: 0, byCountry: [] },
+          allTime: { total: 0, byCountry: [] },
+          dailySeries: [],
+        }
+      : null);
 
   const activePeriod =
     tiktokTab === "today"
@@ -810,19 +819,66 @@ export default function AdminApp() {
   const refreshInFlight = useRef(false);
 
   const loadStats = useCallback(async () => {
-    const [website, facebook, promo, users, problemReports] = await Promise.all([
+    const [websiteR, facebookR, promoR, usersR, reportsR] = await Promise.allSettled([
       fetchAdminStats(),
       fetchFbPageStats(),
       fetchTikTokPromo(),
       fetchAdminUsers(),
       fetchAdminReports(),
     ]);
-    setStats(website);
-    setFbStats(facebook);
-    setTiktokPromo(promo);
-    setUserStats(users);
-    setReports(problemReports.reports);
-    setReportsUnread(problemReports.unread);
+
+    const errors: string[] = [];
+
+    if (websiteR.status === "fulfilled") {
+      setStats(websiteR.value);
+    } else {
+      errors.push(
+        websiteR.reason instanceof Error ? websiteR.reason.message : "Website stats unavailable",
+      );
+    }
+
+    if (facebookR.status === "fulfilled") {
+      setFbStats(facebookR.value);
+    } else {
+      errors.push(
+        facebookR.reason instanceof Error ? facebookR.reason.message : "Facebook stats unavailable",
+      );
+    }
+
+    if (promoR.status === "fulfilled") {
+      setTiktokPromo(promoR.value);
+    } else {
+      setTiktokPromo({
+        available: false,
+        readyCount: 0,
+        totalLanguages: GAME_LANGUAGES.length,
+        languages: [],
+        generateHint: "npm run promo:tiktok:all",
+        note: "Promo manifest could not be loaded. Refresh after deploy finishes.",
+      });
+      errors.push(
+        promoR.reason instanceof Error ? promoR.reason.message : "TikTok promo unavailable",
+      );
+    }
+
+    if (usersR.status === "fulfilled") {
+      setUserStats(usersR.value);
+    } else {
+      errors.push(
+        usersR.reason instanceof Error ? usersR.reason.message : "User stats unavailable",
+      );
+    }
+
+    if (reportsR.status === "fulfilled") {
+      setReports(reportsR.value.reports);
+      setReportsUnread(reportsR.value.unread);
+    } else {
+      errors.push(
+        reportsR.reason instanceof Error ? reportsR.reason.message : "Reports unavailable",
+      );
+    }
+
+    setError(errors.length > 0 ? errors.join(" · ") : "");
     setLastUpdated(new Date());
   }, []);
 
@@ -830,11 +886,8 @@ export default function AdminApp() {
     if (refreshInFlight.current) return;
     refreshInFlight.current = true;
     setRefreshing(true);
-    setError("");
     try {
       await loadStats();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load stats");
     } finally {
       refreshInFlight.current = false;
       setRefreshing(false);
