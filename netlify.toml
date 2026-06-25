@@ -106,6 +106,18 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/api/report-problem"
+  to = "/.netlify/functions/report-problem"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/admin/reports"
+  to = "/.netlify/functions/admin-reports"
+  status = 200
+  force = true
+
 [[edge_functions]]
   path = "/*"
   function = "og-meta"

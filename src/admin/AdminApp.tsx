@@ -4,6 +4,7 @@ import {
   adminLogout,
   checkAdminSession,
   countryLabel,
+  fetchAdminReports,
   fetchAdminStats,
   fetchAdminUsers,
   fetchFbPageStats,
@@ -11,6 +12,7 @@ import {
   formatDisplayDate,
   formatDuration,
   formatMonthLabel,
+  markReportRead,
   sourceLabel,
   type AdminStats,
   type AdminUsersStats,
@@ -18,10 +20,11 @@ import {
   type FbMetricBlock,
   type FbPageStats,
   type PeriodStats,
+  type ProblemReport,
 } from "./adminApi";
 
 type Tab = "today" | "month" | "all";
-type MainView = "website" | "facebook" | "users";
+type MainView = "website" | "facebook" | "users" | "reports";
 
 function formatMetric(value: number | null | undefined): string {
   if (value == null) return "—";
@@ -317,6 +320,71 @@ function UsersDashboard({ userStats }: { userStats: AdminUsersStats | null }) {
   );
 }
 
+function ReportsDashboard({
+  reports,
+  onMarkRead,
+}: {
+  reports: ProblemReport[];
+  onMarkRead: (id: string, read: boolean) => void;
+}) {
+  if (!reports.length) {
+    return (
+      <section className="admin-card">
+        <p className="admin-empty">No problem reports yet.</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="admin-card">
+      <h2 className="admin-section-title">Problem reports</h2>
+      <div className="admin-reports-list">
+        {reports.map((report) => (
+          <article
+            key={report.id}
+            className={`admin-report${report.read ? " is-read" : ""}`}
+          >
+            <div className="admin-report-head">
+              <div>
+                <time className="admin-report-time">{formatDateTime(report.createdAt)}</time>
+                <span className="admin-report-meta">
+                  {report.lang.toUpperCase()}
+                  {report.country ? ` · ${countryLabel(report.country)}` : ""}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="admin-btn admin-btn-small"
+                onClick={() => onMarkRead(report.id, !report.read)}
+              >
+                {report.read ? "Mark unread" : "Mark read"}
+              </button>
+            </div>
+            <p className="admin-report-message">{report.message}</p>
+            <div className="admin-report-foot">
+              {report.email && (
+                <a className="admin-report-link" href={`mailto:${report.email}`}>
+                  {report.email}
+                </a>
+              )}
+              {report.pageUrl && (
+                <a
+                  className="admin-report-link"
+                  href={report.pageUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Page link
+                </a>
+              )}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function FacebookDashboard({
   fbStats,
   fbTab,
@@ -485,6 +553,8 @@ export default function AdminApp() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [fbStats, setFbStats] = useState<FbPageStats | null>(null);
   const [userStats, setUserStats] = useState<AdminUsersStats | null>(null);
+  const [reports, setReports] = useState<ProblemReport[]>([]);
+  const [reportsUnread, setReportsUnread] = useState(0);
   const [mainView, setMainView] = useState<MainView>("website");
   const [tab, setTab] = useState<Tab>("today");
   const [fbTab, setFbTab] = useState<Tab>("today");
@@ -493,14 +563,17 @@ export default function AdminApp() {
   const refreshInFlight = useRef(false);
 
   const loadStats = useCallback(async () => {
-    const [website, facebook, users] = await Promise.all([
+    const [website, facebook, users, problemReports] = await Promise.all([
       fetchAdminStats(),
       fetchFbPageStats(),
       fetchAdminUsers(),
+      fetchAdminReports(),
     ]);
     setStats(website);
     setFbStats(facebook);
     setUserStats(users);
+    setReports(problemReports.reports);
+    setReportsUnread(problemReports.unread);
     setLastUpdated(new Date());
   }, []);
 
@@ -562,6 +635,21 @@ export default function AdminApp() {
     setStats(null);
     setFbStats(null);
     setUserStats(null);
+    setReports([]);
+    setReportsUnread(0);
+  }
+
+  async function handleMarkReportRead(id: string, read: boolean) {
+    try {
+      const updated = await markReportRead(id, read);
+      setReports((prev) => {
+        const next = prev.map((r) => (r.id === id ? updated : r));
+        setReportsUnread(next.filter((r) => !r.read).length);
+        return next;
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update report");
+    }
   }
 
   if (authenticated === null) {
@@ -651,7 +739,9 @@ export default function AdminApp() {
               ? "Visits, sources, time on site, and devices"
               : mainView === "facebook"
                 ? "Facebook Page views, reach, engagement, and followers"
-                : "Registered players, sign-ins, and cloud game stats"}
+                : mainView === "users"
+                  ? "Registered players, sign-ins, and cloud game stats"
+                  : "User-submitted bug reports and feedback"}
           </p>
         </div>
         <div className="admin-header-actions">
@@ -694,6 +784,16 @@ export default function AdminApp() {
           onClick={() => setMainView("users")}
         >
           Registered users
+        </button>
+        <button
+          type="button"
+          className={`admin-main-tab${mainView === "reports" ? " is-active" : ""}`}
+          onClick={() => setMainView("reports")}
+        >
+          Reports
+          {reportsUnread > 0 && (
+            <span className="admin-tab-badge">{reportsUnread}</span>
+          )}
         </button>
       </div>
 
@@ -755,8 +855,10 @@ export default function AdminApp() {
           </>
         ) : mainView === "facebook" ? (
           <FacebookDashboard fbStats={fbStats} fbTab={fbTab} onTabChange={setFbTab} />
-        ) : (
+        ) : mainView === "users" ? (
           <UsersDashboard userStats={userStats} />
+        ) : (
+          <ReportsDashboard reports={reports} onMarkRead={handleMarkReportRead} />
         )}
       </div>
     </div>

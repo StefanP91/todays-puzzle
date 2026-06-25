@@ -179,6 +179,42 @@ export async function fetchAdminUsers(): Promise<AdminUsersStats> {
   return parseJson<AdminUsersStats>(response);
 }
 
+export interface ProblemReport {
+  id: string;
+  createdAt: string;
+  message: string;
+  email: string | null;
+  lang: string;
+  pageUrl: string | null;
+  country: string | null;
+  userAgent: string | null;
+  read: boolean;
+}
+
+export interface AdminReportsResponse {
+  reports: ProblemReport[];
+  unread: number;
+}
+
+export async function fetchAdminReports(): Promise<AdminReportsResponse> {
+  const response = await fetch("/api/admin/reports", {
+    credentials: "include",
+    cache: "no-store",
+  });
+  return parseJson<AdminReportsResponse>(response);
+}
+
+export async function markReportRead(id: string, read: boolean): Promise<ProblemReport> {
+  const response = await fetch("/api/admin/reports", {
+    method: "PATCH",
+    credentials: "include",
+    headers: jsonHeaders,
+    body: JSON.stringify({ id, read }),
+  });
+  const data = await parseJson<{ report: ProblemReport }>(response);
+  return data.report;
+}
+
 export function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return "—";
   try {

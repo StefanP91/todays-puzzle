@@ -4,6 +4,7 @@ import BestTipsSection from "./components/BestTipsSection";
 import Board from "./components/Board";
 import CompletedBanner from "./components/CompletedBanner";
 import FaqSection from "./components/FaqSection";
+import ReportProblemModal from "./components/ReportProblemModal";
 import Keyboard from "./components/Keyboard";
 import LanguageSection from "./components/LanguageSection";
 import ResultModal from "./components/ResultModal";
@@ -39,6 +40,7 @@ import {
 import { pickRandomTrainingWord } from "./lib/training";
 import { applyPageMeta } from "./lib/pageMeta";
 import { trackEvent, trackGameComplete, trackPageView, setAnalyticsLanguage } from "./lib/analytics";
+import { getReportContent } from "./lib/reportContent";
 import { trackVisitOnce } from "./lib/trackVisit";
 import { normalizeKey, normalizeWord } from "./lib/words";
 import type { Cell, GameStatus, LetterState } from "./types";
@@ -84,6 +86,7 @@ export default function App() {
   const [shake, setShake] = useState(false);
   const [message, setMessage] = useState("");
   const [showStats, setShowStats] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const [showResult, setShowResult] = useState(false);
   const [stats, setStats] = useState<Stats>(() => loadStats(initialLang));
   const [statsUpdated, setStatsUpdated] = useState(false);
@@ -93,6 +96,7 @@ export default function App() {
   const gameContent = useMemo(() => getGameContent(gameLang), [gameLang]);
   const authContent = useMemo(() => getAuthContent(gameLang), [gameLang]);
   const siteContent = useMemo(() => getSiteContent(gameLang), [gameLang]);
+  const reportContent = useMemo(() => getReportContent(gameLang), [gameLang]);
   const keyboardRows = useMemo(() => getKeyboardRows(gameLang), [gameLang]);
   const allKeys = useMemo(() => new Set(keyboardRows.flat()), [keyboardRows]);
 
@@ -583,6 +587,16 @@ export default function App() {
           </main>
         </div>
 
+        <div className="report-problem-wrap">
+          <button
+            type="button"
+            className="report-problem-btn"
+            onClick={() => setShowReport(true)}
+          >
+            {reportContent.button}
+          </button>
+        </div>
+
         <div className="landing-footer">
           <LanguageSection
             content={siteContent}
@@ -593,6 +607,14 @@ export default function App() {
           <FaqSection content={siteContent} />
         </div>
       </div>
+
+      {showReport && (
+        <ReportProblemModal
+          content={reportContent}
+          lang={gameLang}
+          onClose={() => setShowReport(false)}
+        />
+      )}
     </>
   );
 }

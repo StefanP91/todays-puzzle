@@ -491,6 +491,30 @@ body {
   gap: 1rem;
 }
 
+.report-problem-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 0.25rem;
+}
+
+.report-problem-btn {
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 0.875rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  min-height: 44px;
+  touch-action: manipulation;
+}
+
+.report-problem-btn:hover {
+  color: #e5e7eb;
+}
+
 .landing-section {
   width: 100%;
   background: rgba(22, 33, 62, 0.85);
@@ -1039,6 +1063,9 @@ body {
 }
 
 .admin-main-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   border: 1px solid #d1d5db;
   background: #fff;
   color: #374151;
@@ -1052,6 +1079,89 @@ body {
   background: #1e293b;
   border-color: #1e293b;
   color: #fff;
+}
+
+.admin-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.admin-btn-small {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8rem;
+}
+
+.admin-reports-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.admin-report {
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid #f59e0b;
+  border-radius: 0.65rem;
+  padding: 0.85rem 1rem;
+  background: #fffbeb;
+}
+
+.admin-report.is-read {
+  border-left-color: #d1d5db;
+  background: #f9fafb;
+  opacity: 0.92;
+}
+
+.admin-report-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.admin-report-time {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.admin-report-meta {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.admin-report-message {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: #1f2937;
+}
+
+.admin-report-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.65rem;
+}
+
+.admin-report-link {
+  font-size: 0.8rem;
+  color: #2563eb;
 }
 
 .admin-summary-card small {
