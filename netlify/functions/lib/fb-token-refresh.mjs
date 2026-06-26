@@ -1,7 +1,7 @@
 import { getServerFacebookAppId } from "./fb-app-id.mjs";
 import { loadTokenBundle, saveTokenBundle } from "./fb-token-store.mjs";
 
-const GRAPH_VERSION = "v21.0";
+const GRAPH_VERSION = "v22.0";
 const REFRESH_BUFFER_SEC = 24 * 60 * 60;
 
 function getAppSecret() {

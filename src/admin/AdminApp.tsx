@@ -217,7 +217,7 @@ function FbMetricCards({
       <h3 className="admin-section-title admin-section-title--sub">{title}</h3>
       <div className="admin-fb-metrics-grid">
         <div className="admin-engagement-card">
-          <span className="admin-engagement-label">Page views</span>
+          <span className="admin-engagement-label">Media views</span>
           <strong>{formatMetric(metrics.pageViews)}</strong>
         </div>
         <div className="admin-engagement-card">
@@ -227,10 +227,6 @@ function FbMetricCards({
         <div className="admin-engagement-card">
           <span className="admin-engagement-label">Post engagements</span>
           <strong>{formatMetric(metrics.engagements)}</strong>
-        </div>
-        <div className="admin-engagement-card">
-          <span className="admin-engagement-label">New follows</span>
-          <strong>{formatMetric(metrics.newFollows)}</strong>
         </div>
       </div>
     </div>
@@ -514,7 +510,7 @@ function FacebookDashboard({
         >
           <span>Today</span>
           <strong>{formatMetric(todayMetrics.pageViews)}</strong>
-          <small>page views</small>
+          <small>media views</small>
         </button>
         <button
           type="button"
@@ -523,7 +519,7 @@ function FacebookDashboard({
         >
           <span>This month</span>
           <strong>{formatMetric(monthMetrics.pageViews)}</strong>
-          <small>page views</small>
+          <small>media views</small>
         </button>
         <button
           type="button"
@@ -532,7 +528,7 @@ function FacebookDashboard({
         >
           <span>28 days</span>
           <strong>{formatMetric(days28Metrics.pageViews)}</strong>
-          <small>page views</small>
+          <small>media views</small>
         </button>
       </div>
 
@@ -544,7 +540,7 @@ function FacebookDashboard({
         <DailyChart
           series={fbStats.dailyPageViews ?? []}
           unitLabel="view"
-          title="Page views — last 30 days"
+          title="Media views — last 30 days"
         />
       </section>
 
@@ -905,7 +901,7 @@ export default function AdminApp() {
             {mainView === "website"
               ? "Visits, sources, time on site, and devices"
               : mainView === "facebook"
-                ? "Facebook Page views, reach, engagement, and followers"
+                ? "Facebook Page media views, reach, engagement, and followers"
                 : mainView === "tiktok"
                   ? "Visits to the site from TikTok"
                   : mainView === "youtube"

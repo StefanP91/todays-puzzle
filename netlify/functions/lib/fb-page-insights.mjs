@@ -1,13 +1,12 @@
 import { getPageAccessTokenWithRetry, getFbEnvDiagnostics, isFbTokenConfigured } from "./fb-token-refresh.mjs";
 
-const GRAPH_VERSION = "v21.0";
+const GRAPH_VERSION = "v22.0";
 
 const DAILY_METRICS = [
-  { key: "pageViews", metric: "page_views_total" },
-  // page_impressions_unique was deprecated by Meta; media viewers is the replacement for reach.
-  { key: "reach", metric: "page_total_media_view_unique" },
-  { key: "engagements", metric: "page_post_engagements" },
-  { key: "follows", metric: "page_follows" },
+  // page_views_total deprecated Nov 2025; page_media_view is the replacement.
+  { key: "pageViews", metrics: ["page_media_view", "page_views_total"] },
+  { key: "reach", metrics: ["page_total_media_view_unique"] },
+  { key: "engagements", metrics: ["page_post_engagements"] },
 ];
 
 function buildTokenWarning(tokenMeta) {
@@ -86,20 +85,27 @@ function sumLastDays(series, days) {
   return series.slice(-days).reduce((sum, item) => sum + item.total, 0);
 }
 
-async function fetchDailyMetric(pageId, token, metric, since, until) {
-  try {
-    const payload = await graphGet(`${pageId}/insights`, {
-      metric,
-      period: "day",
-      since,
-      until,
-      access_token: token,
-    });
-    return { series: parseDailyInsight(payload, metric) };
-  } catch (error) {
-    console.warn(`fb-page-insights: metric ${metric} failed:`, error.message);
-    return { series: [], error: error.message };
+async function fetchDailyMetric(pageId, token, metrics, since, until) {
+  const candidates = Array.isArray(metrics) ? metrics : [metrics];
+  let lastError = null;
+
+  for (const metric of candidates) {
+    try {
+      const payload = await graphGet(`${pageId}/insights`, {
+        metric,
+        period: "day",
+        since,
+        until,
+        access_token: token,
+      });
+      return { series: parseDailyInsight(payload, metric), metric, error: null };
+    } catch (error) {
+      lastError = error.message;
+      console.warn(`fb-page-insights: metric ${metric} failed:`, error.message);
+    }
   }
+
+  return { series: [], metric: candidates[0], error: lastError };
 }
 
 function buildPeriodBlock(series, todayKey, monthStart) {
@@ -107,18 +113,18 @@ function buildPeriodBlock(series, todayKey, monthStart) {
     pageViews: valueOnDate(series.pageViews, todayKey),
     reach: valueOnDate(series.reach, todayKey),
     engagements: valueOnDate(series.engagements, todayKey),
-    newFollows: valueOnDate(series.follows, todayKey),
+    newFollows: null,
     month: {
       pageViews: sumFromDate(series.pageViews, monthStart),
       reach: sumFromDate(series.reach, monthStart),
       engagements: sumFromDate(series.engagements, monthStart),
-      newFollows: sumFromDate(series.follows, monthStart),
+      newFollows: null,
     },
     days28: {
       pageViews: sumLastDays(series.pageViews, 28),
       reach: sumLastDays(series.reach, 28),
       engagements: sumLastDays(series.engagements, 28),
-      newFollows: sumLastDays(series.follows, 28),
+      newFollows: null,
     },
   };
 }
@@ -159,16 +165,16 @@ export async function fetchFbPageStats(event) {
   });
 
   const metricResults = await Promise.all(
-    DAILY_METRICS.map(({ metric }) => fetchDailyMetric(pageId, token, metric, since, until)),
+    DAILY_METRICS.map(({ metrics }) => fetchDailyMetric(pageId, token, metrics, since, until)),
   );
 
   const series = Object.fromEntries(
     DAILY_METRICS.map(({ key }, index) => [key, metricResults[index].series]),
   );
 
-  const metricErrors = DAILY_METRICS.map(({ metric }, index) => {
+  const metricErrors = DAILY_METRICS.map(({ metrics }, index) => {
     const result = metricResults[index];
-    return result.error ? { metric, message: result.error } : null;
+    return result.error ? { metric: result.metric ?? metrics[0], message: result.error } : null;
   }).filter(Boolean);
 
   const hasAnyData = metricResults.some((result) => result.series.length > 0);
@@ -211,6 +217,6 @@ export async function fetchFbPageStats(event) {
     tokenMeta,
     tokenWarning: buildTokenWarning(tokenMeta),
     note:
-      "Facebook insights can lag by up to 48 hours. Today's numbers may still be partial or zero.",
+      "Facebook insights can lag by up to 48 hours. Media views use Meta's page_media_view metric. Daily new follows are no longer available via the API — see total followers above.",
   };
 }
